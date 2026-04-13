@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-TV | Series Player</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f; color: #fff;
+    min-height: 100vh; overflow-x: hidden;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #e50914; border-radius: 4px; }
+
+  /* ── Header ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; color: #fff;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.15); }
+  .logo-sm {
+    font-size: 18px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  /* ── Player ── */
+  .player-wrap {
+    position: relative; background: #000;
+    width: 100%; aspect-ratio: 16/9; max-height: 75vh;
+    overflow: hidden;
+  }
+  .player-wrap iframe {
+    width: 100%; height: 100%; border: none; display: block;
+  }
+  .now-playing-bar {
+    background: linear-gradient(135deg, #1a0a0a, #0f0f1e);
+    border-bottom: 2px solid #e50914;
+    padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .now-playing-text {
+    font-size: 14px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #e50914;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* ── Layout ── */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 0; max-width: 1400px; margin: 0 auto;
+  }
+  @media (max-width: 1024px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .sidebar { order: 3; }
+  }
+
+  /* ── Series Info ── */
+  .series-info-panel { padding: 20px; }
+  .series-poster-row {
+    display: flex; gap: 16px; align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .series-poster {
+    width: 90px; height: 130px; object-fit: cover;
+    border-radius: 8px; flex-shrink: 0;
+    border: 2px solid rgba(229,9,20,0.3);
+  }
+  .series-main-title {
+    font-size: clamp(18px, 3vw, 26px);
+    font-weight: 800; line-height: 1.2; margin-bottom: 8px;
+  }
+  .meta-chips {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+  }
+  .chip {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .chip.red { background: rgba(229,9,20,0.15); border-color: rgba(229,9,20,0.3); color: #ff6b6b; }
+  .chip.blue { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.3); color: #7eb8ff; }
+  .chip.gold { background: rgba(245,197,24,0.15); border-color: rgba(245,197,24,0.3); color: #f5c518; }
+
+  .series-desc {
+    font-size: 13px; color: #aaa; line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  /* ── Action Buttons ── */
+  .action-row {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .action-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 8px; font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-like {
+    background: rgba(229,9,20,0.15);
+    border: 1.5px solid rgba(229,9,20,0.4);
+    color: #ff6b6b;
+  }
+  .btn-like:hover, .btn-like.liked {
+    background: #e50914; border-color: #e50914; color: #fff;
+  }
+  .btn-like.liked i { animation: heartPop 0.3s ease; }
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.4); }
+    100% { transform: scale(1); }
+  }
+  .btn-share {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    color: #ccc;
+  }
+  .btn-share:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .btn-telegram {
+    background: rgba(0,136,204,0.15);
+    border: 1.5px solid rgba(0,136,204,0.3);
+    color: #5bc8ff;
+  }
+  .btn-telegram:hover { background: #0088cc; color: #fff; }
+
+  /* ── Stats Row ── */
+  .stats-row {
+    display: flex; gap: 20px; flex-wrap: wrap;
+    padding: 16px 0; border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 20px;
+  }
+  .stat-box { text-align: center; }
+  .stat-box .val { font-size: 20px; font-weight: 800; color: #e50914; }
+  .stat-box .lbl { font-size: 11px; color: #666; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Episodes ── */
+  .episodes-section { padding: 0 20px 20px; }
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .section-heading {
+    font-size: 16px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-heading::before {
+    content: ''; display: block;
+    width: 3px; height: 18px; background: #e50914; border-radius: 2px;
+  }
+  .eps-count {
+    font-size: 12px; color: #888; font-weight: 500;
+  }
+  .eps-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 8px;
+  }
+  .ep-btn {
+    aspect-ratio: 1; border-radius: 8px;
+    background: #1a1a2e; border: 1.5px solid transparent;
+    color: #ccc; font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ep-btn:hover { background: #2a2a3e; border-color: #e50914; color: #fff; }
+  .ep-btn.active {
+    background: #e50914; border-color: #e50914; color: #fff;
+    box-shadow: 0 0 12px rgba(229,9,20,0.4);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: #0f0f1a;
+    border-left: 1px solid rgba(255,255,255,0.05);
+    padding: 20px; display: flex; flex-direction: column; gap: 20px;
+  }
+
+  /* ── Comments ── */
+  .comments-section { margin-top: 0; }
+  .comment-form {
+    display: flex; gap: 8px; align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .comment-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .comment-input-group { flex: 1; }
+  .comment-name-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 7px 12px;
+    color: #fff; font-size: 12px; font-family: 'Inter', sans-serif;
+    outline: none; margin-bottom: 6px;
+    transition: border-color 0.2s;
+  }
+  .comment-name-input:focus { border-color: #e50914; }
+  .comment-text-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 9px 12px;
+    color: #fff; font-size: 13px; font-family: 'Inter', sans-serif;
+    outline: none; resize: none; min-height: 70px;
+    transition: border-color 0.2s;
+  }
+  .comment-text-input:focus { border-color: #e50914; }
+  .comment-text-input::placeholder { color: #555; }
+  .submit-comment-btn {
+    margin-top: 6px; padding: 7px 16px;
+    background: #e50914; color: #fff;
+    border: none; border-radius: 6px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .submit-comment-btn:hover { background: #ff1a27; }
+  .submit-comment-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Comment Items */
+  .comment-item {
+    display: flex; gap: 10px; padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .comment-item:last-child { border-bottom: none; }
+  .cmmt-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .cmmt-body { flex: 1; }
+  .cmmt-name { font-size: 12px; font-weight: 700; margin-bottom: 3px; }
+  .cmmt-text { font-size: 13px; color: #ccc; line-height: 1.5; }
+  .cmmt-time { font-size: 10px; color: #555; margin-top: 4px; }
+
+  /* ── Loading ── */
+  .loading-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0a0a0f;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+  }
+  .loading-overlay.hidden { display: none; }
+  .spinner {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 3px solid rgba(229,9,20,0.2);
+    border-top-color: #e50914;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1f1f2e; border: 1px solid #333;
+    color: #fff; padding: 11px 22px; border-radius: 10px;
+    font-size: 13px; z-index: 9999;
+    transition: transform 0.3s; pointer-events: none;
+    white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Scrollable comments ── */
+  .comments-list { max-height: 420px; overflow-y: auto; }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 10px 12px; }
+    .series-info-panel { padding: 14px; }
+    .episodes-section { padding: 0 14px 14px; }
+    .ep-btn { font-size: 12px; }
+  }
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="logo-sm" style="font-size:28px;font-family:Inter,sans-serif;font-weight:900;background:linear-gradient(135deg,#e50914,#ff6b35);-webkit-background-clip:text;-webkit-text-fill-color:transparent">K·TV</div>
+  <div class="spinner"></div>
+  <p style="color:#666;font-size:13px">Loading series...</p>
+</div>
+
+<!-- ── Topbar ── -->
+<header class="topbar">
+  <button class="back-btn" onclick="history.back()">
+    <i class="fa-solid fa-arrow-left fa-sm"></i>
+  </button>
+  <div class="logo-sm">K·TV</div>
+  <span id="topbarTitle" class="text-sm font-semibold text-gray-300 truncate flex-1 ml-1"></span>
+  <a href="https://t.me/KTV_Live" target="_blank"
+     class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-500 transition ml-auto flex-shrink-0">
+    <i class="fab fa-telegram text-white text-xs"></i>
+  </a>
+</header>
+
+<!-- ── Player ── -->
+<div class="player-wrap">
+  <iframe id="videoPlayer" allowfullscreen allow="autoplay; fullscreen"></iframe>
+</div>
+
+<!-- Now Playing Bar -->
+<div class="now-playing-bar">
+  <div class="now-playing-text">
+    <div class="pulse-dot"></div>
+    Now Playing: <span id="nowPlayingEp" style="color:#e50914">Episode 1</span>
+  </div>
+  <div style="font-size:12px;color:#666;">
+    <i class="fa-solid fa-eye mr-1"></i>
+    <span id="liveViews">0</span> total views
+  </div>
+</div>
+
+<!-- ── Main Layout ── -->
+<div class="main-layout">
+
+  <!-- Left: Info + Episodes -->
+  <div>
+    <!-- Series Info -->
+    <div class="series-info-panel">
+      <div class="series-poster-row">
+        <img id="seriesPoster" src="" alt="poster" class="series-poster"
+             onerror="this.src='https://via.placeholder.com/90x130/1a1a2e/fff?text=K-TV'">
+        <div style="flex:1">
+          <h1 class="series-main-title" id="seriesTitle">Loading...</h1>
+          <div class="meta-chips" id="metaChips">
+            <span class="chip red skeleton-chip">Loading...</span>
+          </div>
+          <p class="series-desc" id="seriesDesc"></p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-row">
+        <button class="action-btn btn-like" id="likeBtn" onclick="toggleLike()">
+          <i class="fa-solid fa-heart"></i>
+          <span id="likesCount">0</span> Likes
+        </button>
+        <button class="action-btn btn-share" onclick="shareNow()">
+          <i class="fa-solid fa-share-nodes"></i> Share
+        </button>
+        <a href="https://t.me/KTV_Live" target="_blank" class="action-btn btn-telegram" style="text-decoration:none">
+          <i class="fab fa-telegram"></i> Telegram
+        </a>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="val" id="statViews">0</div>
+          <div class="lbl"><i class="fa-solid fa-eye"></i> Views</div>
+        </div>
+        <div class="stat-box">
+          <div class="val" id="statLikes">0</div>
+          <div class="lbl"><i class="fa-solid fa-heart"></i> Likes</div>
+        </div>
+        <div class="stat-box">
+          <div class="val" id="statEps">0</div>
+          <div class="lbl"><i class="fa-solid fa-film"></i> Episodes</div>
+        </div>
+        <div class="stat-box">
+          <div class="val" id="statComments">0</div>
+          <div class="lbl"><i class="fa-solid fa-comment"></i> Comments</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Episodes -->
+    <div class="episodes-section">
+      <div class="section-header">
+        <div class="section-heading">Episodes</div>
+        <span class="eps-count" id="epsCount">0 Episodes</span>
+      </div>
+      <div class="eps-grid" id="epsGrid"></div>
+    </div>
+
+    <!-- Comments (mobile shows here, desktop in sidebar) -->
+    <div class="block lg:hidden" style="padding:0 20px 30px">
+      <div id="commentsMobile"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar (desktop only) -->
+  <div class="sidebar hidden lg:flex">
+    <div id="commentsSidebar" class="comments-section w-full"></div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// SUPABASE CONFIG — Replace with your credentials
+// ─────────────────────────────────────────────
+const SUPABASE_URL  = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON = "YOUR_ANON_KEY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── Session ───
+let SESSION_ID = localStorage.getItem('ktv_session');
+if (!SESSION_ID) {
+  SESSION_ID = 'u_' + Math.random().toString(36).substr(2,12) + Date.now();
+  localStorage.setItem('ktv_session', SESSION_ID);
+}
+
+// ─── State ───
+const urlParams  = new URLSearchParams(window.location.search);
+const SERIES_ID  = urlParams.get('id');
+let seriesData   = null;
+let episodesData = [];
+let currentEpId  = null;
+let isLiked      = false;
+let totalViews   = 0;
+let totalLikes   = 0;
+let totalComments= 0;
+
+// ─── Helpers ───
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(1)+'K';
+  return n || 0;
+}
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)   return 'just now';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400)return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function convertToEmbedUrl(url) {
+  if (!url) return '';
+  if (url.includes('drive.google.com')) {
+    return url.replace(/\/file\/d\/([^/]+)\/.*/, '/file/d/$1/preview');
+  }
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
+  return url;
+}
+
+// ─── Redirect guard ───
+if (!SERIES_ID) { location.href = 'index.html'; }
+
+// ─── Load Everything ───
+async function init() {
+  try {
+    // 1. Series info
+    const { data: s, error: se } = await supabase
+      .from('series').select('*').eq('id', SERIES_ID).single();
+    if (se) throw se;
+    seriesData = s;
+
+    // 2. Episodes
+    const { data: eps } = await supabase
+      .from('episodes').select('*').eq('series_id', SERIES_ID)
+      .order('episode_number', { ascending: true });
+    episodesData = eps || [];
+
+    // 3. Stats
+    const [viewsRes, likesRes, commentsRes] = await Promise.all([
+      supabase.from('views').select('id', { count: 'exact' }).eq('series_id', SERIES_ID),
+      supabase.from('likes').select('id', { count: 'exact' }).eq('series_id', SERIES_ID),
+      supabase.from('comments').select('id', { count: 'exact' }).eq('series_id', SERIES_ID)
+    ]);
+    totalViews    = viewsRes.count || 0;
+    totalLikes    = likesRes.count || 0;
+    totalComments = commentsRes.count || 0;
+
+    // 4. Is liked by session?
+    const { data: myLike } = await supabase
+      .from('likes').select('id')
+      .eq('series_id', SERIES_ID).eq('session_id', SESSION_ID).single();
+    isLiked = !!myLike;
+
+    renderPage();
+    renderEpisodes();
+    renderComments();
+    renderCommentForm();
+
+    // Hide loading
+    document.getElementById('loadingOverlay').classList.add('hidden');
+
+    // Auto-play first episode
+    if (episodesData.length > 0) {
+      setTimeout(() => playEpisode(episodesData[0]), 400);
+    }
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('loadingOverlay').innerHTML =
+      `<p style="color:#e50914;text-align:center;padding:20px">
+        <i class="fa-solid fa-triangle-exclamation" style="font-size:36px;display:block;margin-bottom:12px"></i>
+        Failed to load series.<br>
+        <a href="index.html" style="color:#888;font-size:13px;margin-top:8px;display:inline-block">← Go Back</a>
+      </p>`;
+  }
+}
+
+// ─── Render Page Info ───
+function renderPage() {
+  const s = seriesData;
+  document.title = `${s.title} | K-TV`;
+  document.getElementById('topbarTitle').textContent = s.title;
+  document.getElementById('seriesTitle').textContent = s.title;
+  document.getElementById('seriesPoster').src = s.thumbnail || '';
+  document.getElementById('seriesDesc').textContent = s.description || 'Stream this amazing series in HD quality on K-TV.';
+
+  // Meta chips
+  document.getElementById('metaChips').innerHTML = `
+    <span class="chip red">${s.rating || 'PG-13'}</span>
+    <span class="chip blue">${s.quality || 'HD'}</span>
+    <span class="chip gold">${s.genre || 'K-Drama'}</span>
+    <span class="chip">${s.language || 'Korean'}</span>
+    ${s.release_year ? `<span class="chip">${s.release_year}</span>` : ''}
+  `;
+
+  updateStats();
+  updateLikeBtn();
+}
+
+function updateStats() {
+  document.getElementById('statViews').textContent    = fmtNum(totalViews);
+  document.getElementById('statLikes').textContent    = fmtNum(totalLikes);
+  document.getElementById('statEps').textContent      = episodesData.length;
+  document.getElementById('statComments').textContent = fmtNum(totalComments);
+  document.getElementById('liveViews').textContent    = fmtNum(totalViews);
+  document.getElementById('likesCount').textContent   = fmtNum(totalLikes);
+}
+
+function updateLikeBtn() {
+  const btn = document.getElementById('likeBtn');
+  if (isLiked) {
+    btn.classList.add('liked');
+    btn.querySelector('i').classList.add('fa-solid');
+  } else {
+    btn.classList.remove('liked');
+  }
+}
+
+// ─── Episodes ───
+function renderEpisodes() {
+  const grid = document.getElementById('epsGrid');
+  document.getElementById('epsCount').textContent = `${episodesData.length} Episode${episodesData.length !== 1 ? 's' : ''}`;
+  grid.innerHTML = '';
+  episodesData.forEach(ep => {
+    const btn = document.createElement('button');
+    btn.className = 'ep-btn';
+    btn.id = `ep-${ep.id}`;
+    btn.textContent = ep.episode_number;
+    btn.title = ep.title || `Episode ${ep.episode_number}`;
+    btn.addEventListener('click', () => playEpisode(ep));
+    grid.appendChild(btn);
+  });
+}
+
+// ─── Play Episode ───
+async function playEpisode(ep) {
+  // Update player
+  const embedUrl = convertToEmbedUrl(ep.video_url);
+  document.getElementById('videoPlayer').src = embedUrl;
+  document.getElementById('nowPlayingEp').textContent = `Episode ${ep.episode_number}${ep.title ? ' – ' + ep.title : ''}`;
+
+  // Highlight button
+  document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`ep-${ep.id}`);
+  if (btn) { btn.classList.add('active'); btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  currentEpId = ep.id;
+
+  // Record view
+  await recordView(ep.id);
+}
+
+// ─── Record View ───
+async function recordView(epId) {
+  try {
+    await supabase.from('views').insert({
+      series_id: parseInt(SERIES_ID),
+      episode_id: epId,
+      session_id: SESSION_ID
+    });
+    totalViews++;
+    updateStats();
+  } catch(e) { /* ignore duplicate views */ }
+}
+
+// ─── Like / Unlike ───
+async function toggleLike() {
+  const btn = document.getElementById('likeBtn');
+  btn.disabled = true;
+
+  try {
+    if (isLiked) {
+      await supabase.from('likes')
+        .delete().eq('series_id', SERIES_ID).eq('session_id', SESSION_ID);
+      isLiked = false;
+      totalLikes = Math.max(0, totalLikes - 1);
+      showToast('💔 Removed from likes');
+    } else {
+      await supabase.from('likes').insert({
+        series_id: parseInt(SERIES_ID),
+        session_id: SESSION_ID
+      });
+      isLiked = true;
+      totalLikes++;
+      showToast('❤️ Added to likes!');
+    }
+    updateLikeBtn();
+    updateStats();
+  } catch(e) {
+    showToast('Could not update like');
+  }
+  btn.disabled = false;
+}
+
+// ─── Share ───
+function shareNow() {
+  if (navigator.share) {
+    navigator.share({ title: seriesData.title, url: location.href });
+  } else {
+    navigator.clipboard.writeText(location.href);
+    showToast('🔗 Link copied to clipboard!');
+  }
+}
+
+// ─── Comment Form HTML ───
+function getCommentFormHTML() {
+  const savedName = localStorage.getItem('ktv_username') || '';
+  return `
+    <div class="section-heading mb-3" style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
+      <span style="width:3px;height:18px;background:#e50914;border-radius:2px;display:inline-block"></span>
+      Comments <span id="commentCountBadge" style="font-size:12px;color:#666;font-weight:500">(${totalComments})</span>
+    </div>
+    <div class="comment-form">
+      <div class="comment-avatar">
+        <i class="fa-solid fa-user fa-xs"></i>
+      </div>
+      <div class="comment-input-group">
+        <input type="text" id="commentName" class="comment-name-input"
+               placeholder="Your name..." value="${savedName}" maxlength="30">
+        <textarea id="commentText" class="comment-text-input"
+                  placeholder="Write a comment..." maxlength="300"></textarea>
+        <button class="submit-comment-btn" onclick="submitComment()">
+          <i class="fa-solid fa-paper-plane mr-1"></i> Post Comment
+        </button>
+      </div>
+    </div>
+    <div class="comments-list" id="commentsList"></div>
+  `;
+}
+
+// ─── Render Comments Section ───
+async function renderCommentForm() {
+  const html = getCommentFormHTML();
+  document.getElementById('commentsSidebar').innerHTML = html;
+  document.getElementById('commentsMobile').innerHTML = html;
+  // Load comments into both
+  await loadComments();
+}
+
+async function renderComments() { /* initial placeholder */ }
+
+// ─── Load Comments ───
+async function loadComments() {
+  const { data: comments } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('series_id', SERIES_ID)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  const list = comments || [];
+  totalComments = list.length;
+  updateStats();
+
+  const html = list.length
+    ? list.map(c => commentHTML(c)).join('')
+    : `<p style="text-align:center;color:#555;font-size:13px;padding:20px 0">
+         <i class="fa-regular fa-comment-dots" style="display:block;font-size:28px;margin-bottom:8px"></i>
+         No comments yet. Be the first!
+       </p>`;
+
+  // Update both sidebar & mobile
+  ['commentsList', ...document.querySelectorAll('#commentsList')].forEach(() => {});
+  document.querySelectorAll('#commentsList').forEach(el => el.innerHTML = html);
+  document.querySelectorAll('#commentCountBadge').forEach(el => el.textContent = `(${totalComments})`);
+}
+
+function commentHTML(c) {
+  const initials = (c.user_name || 'A').substring(0, 2).toUpperCase();
+  const colors = ['#e50914','#6366f1','#059669','#d97706','#0088cc','#8b5cf6'];
+  const color  = colors[c.id % colors.length] || '#e50914';
+  return `
+    <div class="comment-item">
+      <div class="cmmt-avatar" style="background:${color}">${initials}</div>
+      <div class="cmmt-body">
+        <div class="cmmt-name">${escHtml(c.user_name || 'Anonymous')}</div>
+        <div class="cmmt-text">${escHtml(c.comment)}</div>
+        <div class="cmmt-time">${timeAgo(c.created_at)}</div>
+      </div>
+    </div>
+  `;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&').replace(/</g,'<')
+    .replace(/>/g,'>').replace(/"/g,'"');
+}
+
+// ─── Submit Comment ───
+async function submitComment() {
+  const nameEls = document.querySelectorAll('#commentName');
+  const textEls = document.querySelectorAll('#commentText');
+  const name    = nameEls[0]?.value.trim() || 'Anonymous';
+  const text    = textEls[0]?.value.trim();
+
+  if (!text) { showToast('⚠️ Please write a comment'); return; }
+  if (text.length < 2) { showToast('⚠️ Comment too short'); return; }
+
+  // Save name
+  localStorage.setItem('ktv_username', name);
+
+  // Disable all submit buttons
+  document.querySelectorAll('.submit-comment-btn').forEach(b => { b.disabled = true; b.textContent = 'Posting...'; });
+
+  try {
+    const { error } = await supabase.from('comments').insert({
+      series_id: parseInt(SERIES_ID),
+      user_name: name,
+      comment: text
+    });
+    if (error) throw error;
+    textEls.forEach(el => el.value = '');
+    showToast('✅ Comment posted!');
+    await loadComments();
+  } catch(e) {
+    showToast('❌ Failed to post comment');
+  }
+
+  document.querySelectorAll('.submit-comment-btn').forEach(b => {
+    b.disabled = false;
+    b.innerHTML = '<i class="fa-solid fa-paper-plane mr-1"></i> Post Comment';
+  });
+}
+
+// ─── Init ───
+init();
+</script>
+</body>
+</html>

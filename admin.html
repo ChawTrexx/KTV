@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-TV Admin Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #fff; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #e50914; border-radius: 4px; }
+
+  /* ── Login Screen ── */
+  .login-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #0a0a0f;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-card {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 40px; width: 100%; max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .login-logo {
+    font-size: 32px; font-weight: 900; letter-spacing: 3px;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-align: center; margin-bottom: 8px;
+  }
+  .admin-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 12px 16px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s; margin-bottom: 12px;
+  }
+  .admin-input:focus { border-color: #e50914; }
+  .admin-input::placeholder { color: #555; }
+  .login-btn {
+    width: 100%; background: #e50914; color: #fff;
+    border: none; border-radius: 10px; padding: 13px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .login-btn:hover { background: #ff1a27; }
+
+  /* ── Layout ── */
+  .admin-layout { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .admin-sidebar {
+    width: 240px; background: #0f0f1a;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0;
+    display: flex; flex-direction: column; z-index: 50;
+    transition: transform 0.3s;
+  }
+  .admin-sidebar.collapsed { transform: translateX(-240px); }
+  .sidebar-logo {
+    font-size: 22px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    padding: 0 20px; margin-bottom: 4px;
+  }
+  .sidebar-subtitle {
+    font-size: 10px; color: #555; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0 20px; margin-bottom: 24px;
+  }
+  .nav-section-label {
+    font-size: 10px; color: #444; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0 20px; margin: 16px 0 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: #777;
+    transition: all 0.2s; border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+  .nav-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: #fff; background: rgba(229,9,20,0.1);
+    border-left-color: #e50914;
+  }
+  .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+  .sidebar-footer {
+    margin-top: auto; padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* ── Main Content ── */
+  .admin-main {
+    margin-left: 240px; flex: 1;
+    display: flex; flex-direction: column; min-height: 100vh;
+    transition: margin-left 0.3s;
+  }
+  .admin-main.full { margin-left: 0; }
+
+  /* ── Topbar ── */
+  .admin-topbar {
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 40;
+  }
+  .page-title { font-size: 18px; font-weight: 700; }
+  .admin-badge {
+    background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.3);
+    color: #ff6b6b; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 24px; }
+  .panel.active { display: block; }
+
+  /* ── Stat Cards ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .stat-val { font-size: 26px; font-weight: 800; }
+  .stat-lbl { font-size: 12px; color: #666; margin-top: 2px; }
+  .stat-trend { font-size: 11px; color: #22c55e; margin-top: 4px; }
+
+  /* ── Cards/Forms ── */
+  .admin-card {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title i { color: #e50914; }
+  .card-body { padding: 20px; }
+
+  /* Form inputs */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input {
+    background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: #e50914; background: rgba(255,255,255,0.06); }
+  .form-input::placeholder { color: #444; }
+  .form-select {
+    background: #1a1a2e; border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; cursor: pointer; transition: border-color 0.2s;
+  }
+  .form-select:focus { border-color: #e50914; }
+  .form-textarea {
+    background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; resize: vertical; min-height: 80px;
+    transition: border-color 0.2s; width: 100%;
+  }
+  .form-textarea:focus { border-color: #e50914; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: #e50914; color: #fff; }
+  .btn-primary:hover { background: #ff1a27; transform: translateY(-1px); }
+  .btn-success { background: #059669; color: #fff; }
+  .btn-success:hover { background: #10b981; }
+  .btn-warning { background: #d97706; color: #fff; }
+  .btn-warning:hover { background: #f59e0b; }
+  .btn-danger { background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.3); color: #ff6b6b; }
+  .btn-danger:hover { background: #e50914; color: #fff; }
+  .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* ── Table ── */
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th {
+    text-align: left; padding: 12px 16px;
+    font-size: 11px; font-weight: 700; color: #555;
+    letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+  }
+  .admin-table td {
+    padding: 12px 16px; font-size: 13px; color: #ccc;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+  }
+  .admin-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .admin-table tr:last-child td { border-bottom: none; }
+
+  /* ── Thumbnail preview ── */
+  .thumb-preview { width: 48px; height: 68px; object-fit: cover; border-radius: 6px; }
+
+  /* ── Badge ── */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge-red { background: rgba(229,9,20,0.15); color: #ff6b6b; }
+  .badge-green { background: rgba(5,150,105,0.15); color: #34d399; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #7eb8ff; }
+  .badge-gold { background: rgba(245,197,24,0.15); color: #f5c518; }
+
+  /* ── Tabs ── */
+  .tab-bar { display: flex; gap: 4px; padding: 4px; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 20px; }
+  .tab { padding: 8px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; color: #777; border: none; background: transparent; transition: all 0.2s; }
+  .tab.active { background: #e50914; color: #fff; }
+  .tab:hover:not(.active) { color: #fff; background: rgba(255,255,255,0.05); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #1f1f2e; border: 1px solid #333;
+    color: #fff; padding: 12px 20px; border-radius: 10px;
+    font-size: 13px; z-index: 9999;
+    transform: translateY(100px); transition: transform 0.3s;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    max-width: 340px;
+  }
+  .toast.show { transform: translateY(0); }
+
+  /* ── Confirm Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 32px; max-width: 380px; width: 90%;
+    text-align: center;
+  }
+  .modal-icon { font-size: 40px; margin-bottom: 16px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-desc { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+
+  /* ── Chart container ── */
+  .chart-box { background: #12121e; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+  .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #ccc; }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    .admin-sidebar { transform: translateX(-240px); }
+    .admin-sidebar.open { transform: translateX(0); }
+    .admin-main { margin-left: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .panel { padding: 14px; }
+    .admin-topbar { padding: 12px 14px; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Loading ── */
+  .table-loading { text-align: center; padding: 40px; color: #555; }
+  .spinner-sm { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(229,9,20,0.2); border-top-color: #e50914; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-row td { padding: 40px !important; text-align: center; color: #555; }
+
+  /* Preview image thumb in form */
+  .img-preview-wrap { margin-top: 8px; }
+  .img-preview-wrap img { width: 80px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body>
+
+<!-- ── Login Screen ── -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">K·TV</div>
+    <p style="text-align:center;font-size:12px;color:#555;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px">
+      Admin Panel
+    </p>
+    <input type="text" id="loginUser" class="admin-input" placeholder="Username" autocomplete="off">
+    <input type="password" id="loginPass" class="admin-input" placeholder="Password">
+    <button class="login-btn" onclick="doLogin()">
+      <i class="fa-solid fa-lock mr-2"></i> Sign In
+    </button>
+    <p id="loginErr" style="color:#e50914;text-align:center;font-size:12px;margin-top:12px;display:none">
+      <i class="fa-solid fa-circle-exclamation mr-1"></i> Invalid credentials
+    </p>
+    <p style="text-align:center;margin-top:16px">
+      <a href="index.html" style="color:#555;font-size:12px;text-decoration:none">
+        <i class="fa-solid fa-arrow-left mr-1"></i>Back to site
+      </a>
+    </p>
+  </div>
+</div>
+
+<!-- ── Admin App ── -->
+<div class="admin-layout" id="adminApp" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">K·TV</div>
+    <div class="sidebar-subtitle">Admin Panel</div>
+
+    <div class="nav-section-label">Main</div>
+    <a class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard')">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+    <a class="nav-item" data-panel="series" onclick="switchPanel('series')">
+      <i class="fa-solid fa-film"></i> Series
+    </a>
+    <a class="nav-item" data-panel="episodes" onclick="switchPanel('episodes')">
+      <i class="fa-solid fa-play-circle"></i> Episodes
+    </a>
+
+    <div class="nav-section-label">Engagement</div>
+    <a class="nav-item" data-panel="comments" onclick="switchPanel('comments')">
+      <i class="fa-solid fa-comments"></i> Comments
+    </a>
+    <a class="nav-item" data-panel="analytics" onclick="switchPanel('analytics')">
+      <i class="fa-solid fa-chart-line"></i> Analytics
+    </a>
+
+    <div class="nav-section-label">Site</div>
+    <a class="nav-item" href="index.html" target="_blank">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Site
+    </a>
+
+    <div class="sidebar-footer">
+      <button onclick="doLogout()" class="btn btn-ghost btn-sm w-full justify-center">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="admin-main" id="adminMain">
+
+    <!-- Topbar -->
+    <div class="admin-topbar">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="btn btn-ghost btn-sm lg:hidden">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+      </div>
+      <div class="flex items-center gap-10">
+        <span class="admin-badge"><i class="fa-solid fa-shield-halved mr-1"></i> ADMIN</span>
+        <a href="index.html" class="btn btn-ghost btn-sm hidden md:flex">
+          <i class="fa-solid fa-globe"></i> View Site
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- PANEL: Dashboard               -->
+    <!-- ═══════════════════════════════ -->
+    <div class="panel active" id="panel-dashboard">
+
+      <!-- Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(229,9,20,0.15)">
+            <i class="fa-solid fa-film" style="color:#e50914"></i>
+          </div>
+          <div>
+            <div class="stat-val" id="ds-series">—</div>
+            <div class="stat-lbl">Total Series</div>
+            <div class="stat-trend"><i class="fa-solid fa-arrow-up fa-xs"></i> All genres</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(59,130,246,0.15)">
+            <i class="fa-solid fa-play-circle" style="color:#3b82f6"></i>
+          </div>
+          <div>
+            <div class="stat-val" id="ds-episodes">—</div>
+            <div class="stat-lbl">Total Episodes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(5,150,105,0.15)">
+            <i class="fa-solid fa-eye" style="color:#10b981"></i>
+          </div>
+          <div>
+            <div class="stat-val" id="ds-views">—</div>
+            <div class="stat-lbl">Total Views</div>
+            <div class="stat-trend"><i class="fa-solid fa-fire fa-xs" style="color:#ff6b35"></i> All time</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(245,197,24,0.15)">
+            <i class="fa-solid fa-heart" style="color:#f5c518"></i>
+          </div>
+          <div>
+            <div class="stat-val" id="ds-likes">—</div>
+            <div class="stat-lbl">Total Likes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(139,92,246,0.15)">
+            <i class="fa-solid fa-comments" style="color:#8b5cf6"></i>
+          </div>
+          <div>
+            <div class="stat-val" id="ds-comments">—</div>
+            <div class="stat-lbl">Total Comments</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(0,136,204,0.15)">
+            <i class="fab fa-telegram" style="color:#0088cc"></i>
+          </div>
+          <div>
+            <div class="stat-val">∞</div>
+            <div class="stat-lbl">Telegram Members</div>
+            <div>
+              <a href="https://t.me/KTV_Live" target="_blank"
+                 style="font-size:11px;color:#0088cc;text-decoration:none">@KTV_Live</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px" class="charts-grid">
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-chart-bar mr-2" style="color:#e50914"></i>Top Series by Views</div>
+          <canvas id="chartViews" height="220"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-chart-pie mr-2" style="color:#6366f1"></i>Series by Genre</div>
+          <canvas id="chartGenre" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Series -->
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Recently Added Series</div>
+          <button class="btn btn-primary btn-sm" onclick="switchPanel('series')">
+            <i class="fa-solid fa-plus"></i> Add New
+          </button>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Poster</th><th>Title</th><th>Genre</th>
+                <th>Views</th><th>Likes</th><th>Episodes</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recentSeriesBody">
+              <tr class="loading-row"><td colspan="7"><div class="spinner-sm"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- PANEL: Series                  -->
+    <!-- ═══════════════════════════════ -->
+    <div class="panel" id="panel-series">
+
+      <!-- Add Series Form -->
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-plus-circle"></i> Add New Series</div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Title *</label>
+              <input type="text" id="s-title" class="form-input" placeholder="Series title...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Genre</label>
+              <select id="s-genre" class="form-select">
+                <option>K-Drama</option><option>C-Drama</option>
+                <option>J-Drama</option><option>Thai Drama</option>
+                <option>Movie</option><option>Variety</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Thumbnail URL *</label>
+              <input type="url" id="s-thumb" class="form-input" placeholder="https://..." oninput="previewThumb(this)">
+              <div class="img-preview-wrap" id="thumbPreview" style="display:none">
+                <img id="thumbImg" src="" alt="preview">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Episode 1 Video URL *</label>
+              <input type="url" id="s-video" class="form-input" placeholder="Google Drive / YouTube URL">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Rating</label>
+              <select id="s-rating" class="form-select">
+                <option>PG</option><option selected>PG-13</option>
+                <option>R</option><option>G</option><option>NR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quality</label>
+              <select id="s-quality" class="form-select">
+                <option>HD</option><option>4K</option>
+                <option>FHD</option><option>SD</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Language</label>
+              <select id="s-lang" class="form-select">
+                <option>Korean</option><option>Chinese</option>
+                <option>Japanese</option><option>Thai</option>
+                <option>English</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Release Year</label>
+              <input type="number" id="s-year" class="form-input" placeholder="2024" min="2000" max="2030">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Description</label>
+              <textarea id="s-desc" class="form-textarea" placeholder="Series description..."></textarea>
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-primary" onclick="addSeries()" id="addSeriesBtn">
+              <i class="fa-solid fa-upload"></i> Upload Series
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Series List -->
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-list"></i> All Series</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="seriesSearch" class="form-input" placeholder="Search..." style="width:180px;padding:7px 12px;font-size:12px" oninput="filterSeriesTable()">
+            <button class="btn btn-ghost btn-sm" onclick="loadSeriesTable()">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Poster</th><th>Title</th><th>Genre</th><th>Quality</th>
+                <th>Episodes</th><th>Views</th><th>Likes</th><th>Created</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="seriesTableBody">
+              <tr class="loading-row"><td colspan="9"><div class="spinner-sm"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- PANEL: Episodes                -->
+    <!-- ═══════════════════════════════ -->
+    <div class="panel" id="panel-episodes">
+
+      <!-- Add Episode -->
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-circle-play"></i> Add Episode</div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Series *</label>
+              <select id="ep-series" class="form-select" onchange="loadEpisodeTable()"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Episode Number (auto)</label>
+              <input type="number" id="ep-num" class="form-input" placeholder="Auto-detected" min="1" readonly style="opacity:0.6">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Episode Title</label>
+              <input type="text" id="ep-title" class="form-input" placeholder="Optional title...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration</label>
+              <input type="text" id="ep-duration" class="form-input" placeholder="e.g. 45 min">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Video URL *</label>
+              <input type="url" id="ep-url" class="form-input" placeholder="Google Drive / YouTube / Direct URL...">
+            </div>
+          </div>
+          <div style="margin-top:16px">
+            <button class="btn btn-success" onclick="addEpisode()" id="addEpBtn">
+              <i class="fa-solid fa-plus"></i> Add Episode
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Episodes Table -->
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-list-ol"></i> Episodes List</div>
+          <select id="ep-filter-series" class="form-select" style="font-size:12px;padding:6px 10px;width:200px" onchange="loadEpisodeTable()"></select>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr><th>#</th><th>Series</th><th>Title</th><th>Duration</th><th>Video URL</th><th>Views</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="epTableBody">
+              <tr class="loading-row"><td colspan="7"><div class="spinner-sm"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- PANEL: Comments                -->
+    <!-- ═══════════════════════════════ -->
+    <div class="panel" id="panel-comments">
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-comments"></i> All Comments</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="commentsSearch" class="form-input" placeholder="Search..." style="width:180px;padding:7px 12px;font-size:12px" oninput="filterComments()">
+            <button class="btn btn-ghost btn-sm" onclick="loadComments()">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="admin-table">
+            <thead>
+              <tr><th>User</th><th>Series</th><th>Comment</th><th>Date</th><th>Action</th></tr>
+            </thead>
+            <tbody id="commentsBody">
+              <tr class="loading-row"><td colspan="5"><div class="spinner-sm"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ -->
+    <!-- PANEL: Analytics               -->
+    <!-- ═══════════════════════════════ -->
+    <div class="panel" id="panel-analytics">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="chart-box" style="grid-column:1/-1">
+          <div class="chart-title"><i class="fa-solid fa-chart-line mr-2" style="color:#e50914"></i>Top 10 Most Viewed Series</div>
+          <canvas id="chartTopViews" height="120"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-heart mr-2" style="color:#f5c518"></i>Top 10 Most Liked</div>
+          <canvas id="chartTopLikes" height="260"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title"><i class="fa-solid fa-comment mr-2" style="color:#8b5cf6"></i>Most Commented</div>
+          <canvas id="chartTopComments" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin-main -->
+</div><!-- /admin-layout -->
+
+<!-- ── Confirm Modal ── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modalIcon">⚠️</div>
+    <div class="modal-title" id="modalTitle">Are you sure?</div>
+    <div class="modal-desc" id="modalDesc">This action cannot be undone.</div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fa-solid fa-circle-info" id="toastIcon"></i> <span id="toastMsg"></span></div>
+
+<script>
+// ─────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────
+const SUPABASE_URL  = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON = "YOUR_ANON_KEY";
+
+// ⚠️ Change these credentials!
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "ktv2025";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── State ───
+let allSeriesData    = [];
+let allCommentsData  = [];
+let allEpisodesData  = [];
+let editSeriesId     = null;
+let viewsChart, genreChart, topViewsChart, topLikesChart, topCommentsChart;
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+function doLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value.trim();
+  if (u === ADMIN_USER && p === ADMIN_PASS) {
+    sessionStorage.setItem('ktv_admin', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'flex';
+    initAdmin();
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+    document.getElementById('loginPass').value = '';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+  sessionStorage.removeItem('ktv_admin');
+  location.reload();
+}
+
+// Check if already logged in
+if (sessionStorage.getItem('ktv_admin') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'flex';
+  initAdmin();
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+async function initAdmin() {
+  await loadDashboard();
+  await loadSeriesTable();
+  await populateSeriesSelects();
+  await loadEpisodeTable();
+  await loadComments();
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const icons = { info: 'fa-circle-info', success: 'fa-circle-check', error: 'fa-circle-xmark', warning: 'fa-triangle-exclamation' };
+  const colors = { info: '#6366f1', success: '#22c55e', error: '#e50914', warning: '#d97706' };
+  document.getElementById('toastIcon').className = `fa-solid ${icons[type] || icons.info}`;
+  document.getElementById('toastIcon').style.color = colors[type] || colors.info;
+  document.getElementById('toastMsg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1)+'M';
+  if (n >= 1000)    return (n/1000).toFixed(1)+'K';
+  return n || 0;
+}
+function fmtDate(d) {
+  return new Date(d).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
+}
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
+  const titles = { dashboard:'Dashboard', series:'Manage Series', episodes:'Manage Episodes', comments:'Comments', analytics:'Analytics' };
+  document.getElementById('pageTitle').textContent = titles[name] || name;
+  if (name === 'analytics') renderAnalyticsCharts();
+}
+
+function toggleSidebar() {
+  document.getElementById('adminSidebar').classList.toggle('open');
+}
+
+// Modal
+let modalCallback = null;
+function openConfirm(title, desc, icon, cb) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalDesc').textContent  = desc;
+  document.getElementById('modalIcon').textContent  = icon;
+  modalCallback = cb;
+  document.getElementById('confirmModal').classList.add('open');
+  document.getElementById('modalConfirmBtn').onclick = () => { closeModal(); cb && cb(); };
+}
+function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
+
+// Thumb preview
+function previewThumb(el) {
+  const wrap = document.getElementById('thumbPreview');
+  const img  = document.getElementById('thumbImg');
+  if (el.value) { img.src = el.value; wrap.style.display = 'block'; }
+  else { wrap.style.display = 'none'; }
+}
+
+// ─────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────
+async function loadDashboard() {
+  const [sRes, eRes, vRes, lRes, cRes] = await Promise.all([
+    supabase.from('series').select('id', { count: 'exact' }),
+    supabase.from('episodes').select('id', { count: 'exact' }),
+    supabase.from('views').select('id', { count: 'exact' }),
+    supabase.from('likes').select('id', { count: 'exact' }),
+    supabase.from('comments').select('id', { count: 'exact' })
+  ]);
+
+  document.getElementById('ds-series').textContent   = fmtNum(sRes.count);
+  document.getElementById('ds-episodes').textContent  = fmtNum(eRes.count);
+  document.getElementById('ds-views').textContent     = fmtNum(vRes.count);
+  document.getElementById('ds-likes').textContent     = fmtNum(lRes.count);
+  document.getElementById('ds-comments').textContent  = fmtNum(cRes.count);
+
+  // Recent series
+  let { data } = await supabase
+    .from('series_stats').select('*').order('id', { ascending: false }).limit(8);
+
+  if (!data) {
+    // fallback
+    const fb = await supabase.from('series').select('*').order('id', { ascending: false }).limit(8);
+    data = (fb.data || []).map(s => ({ ...s, view_count: 0, like_count: 0, episode_count: 0 }));
+  }
+
+  allSeriesData = data || [];
+  renderRecentTable(data);
+  renderDashCharts(data);
+}
+
+function renderRecentTable(data) {
+  const body = document.getElementById('recentSeriesBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#555;padding:30px">No series found</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(s => `
+    <tr>
+      <td><img src="${escHtml(s.thumbnail||'')}" class="thumb-preview" onerror="this.src='https://via.placeholder.com/48x68/1a1a2e/fff?text=K'"></td>
+      <td><span style="font-weight:600">${escHtml(s.title)}</span></td>
+      <td><span class="badge badge-blue">${escHtml(s.genre||'—')}</span></td>
+      <td><i class="fa-solid fa-eye fa-xs mr-1" style="color:#10b981"></i>${fmtNum(s.view_count)}</td>
+      <td><i class="fa-solid fa-heart fa-xs mr-1" style="color:#e50914"></i>${fmtNum(s.like_count)}</td>
+      <td><i class="fa-solid fa-film fa-xs mr-1" style="color:#6366f1"></i>${s.episode_count||0}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <a href="series.html?id=${s.id}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa-solid fa-eye"></i></a>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteSeries(${s.id},'${escHtml(s.title)}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderDashCharts(data) {
+  const top5  = [...data].sort((a,b) => b.view_count - a.view_count).slice(0,5);
+  const labels = top5.map(s => s.title.length > 14 ? s.title.substr(0,14)+'…' : s.title);
+
+  // Views chart
+  const cvCtx = document.getElementById('chartViews').getContext('2d');
+  if (viewsChart) viewsChart.destroy();
+  viewsChart = new Chart(cvCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Views', data: top5.map(s => s.view_count||0),
+        backgroundColor: 'rgba(229,9,20,0.7)', borderRadius: 6
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: '#888', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.03)' } },
+                y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+  });
+
+  // Genre pie
+  const genreCounts = {};
+  data.forEach(s => { genreCounts[s.genre||'Other'] = (genreCounts[s.genre||'Other']||0) + 1; });
+  const cgCtx = document.getElementById('chartGenre').getContext('2d');
+  if (genreChart) genreChart.destroy();
+  genreChart = new Chart(cgCtx, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(genreCounts),
+      datasets: [{ data: Object.values(genreCounts),
+        backgroundColor: ['#e50914','#6366f1','#059669','#d97706','#0088cc','#8b5cf6','#f97316'],
+        borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#888', font: { size: 11 } } } } }
+  });
+}
+
+// ─────────────────────────────────────────────
+// SERIES
+// ─────────────────────────────────────────────
+async function loadSeriesTable() {
+  document.getElementById('seriesTableBody').innerHTML =
+    `<tr class="loading-row"><td colspan="9"><div class="spinner-sm"></div></td></tr>`;
+
+  let { data } = await supabase
+    .from('series_stats').select('*').order('id', { ascending: false });
+  if (!data) {
+    const fb = await supabase.from('series').select('*').order('id', { ascending: false });
+    data = (fb.data||[]).map(s => ({ ...s, view_count:0, like_count:0, episode_count:0 }));
+  }
+  allSeriesData = data || [];
+  renderSeriesTable(allSeriesData);
+}
+
+function renderSeriesTable(data) {
+  const body = document.getElementById('seriesTableBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#555;padding:30px">No series found. Add one above!</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(s => `
+    <tr>
+      <td><img src="${escHtml(s.thumbnail||'')}" class="thumb-preview" onerror="this.src='https://via.placeholder.com/48x68/1a1a2e/fff?text=K'"></td>
+      <td><div style="font-weight:600;max-width:160px">${escHtml(s.title)}</div></td>
+      <td><span class="badge badge-blue">${escHtml(s.genre||'—')}</span></td>
+      <td><span class="badge badge-green">${escHtml(s.quality||'HD')}</span></td>
+      <td>${s.episode_count||0}</td>
+      <td>${fmtNum(s.view_count)}</td>
+      <td>${fmtNum(s.like_count)}</td>
+      <td style="color:#666;font-size:12px">${fmtDate(s.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <a href="series.html?id=${s.id}" target="_blank" class="btn btn-ghost btn-sm" title="View"><i class="fa-solid fa-eye"></i></a>
+          <button class="btn btn-warning btn-sm" title="Edit" onclick="openEditSeries(${s.id})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-danger btn-sm" title="Delete" onclick="confirmDeleteSeries(${s.id},'${escHtml(s.title)}')"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function filterSeriesTable() {
+  const q = document.getElementById('seriesSearch').value.toLowerCase();
+  renderSeriesTable(allSeriesData.filter(s => s.title.toLowerCase().includes(q)));
+}
+
+async function addSeries() {
+  const title   = document.getElementById('s-title').value.trim();
+  const thumb   = document.getElementById('s-thumb').value.trim();
+  const video   = document.getElementById('s-video').value.trim();
+  const genre   = document.getElementById('s-genre').value;
+  const rating  = document.getElementById('s-rating').value;
+  const quality = document.getElementById('s-quality').value;
+  const lang    = document.getElementById('s-lang').value;
+  const year    = parseInt(document.getElementById('s-year').value) || null;
+  const desc    = document.getElementById('s-desc').value.trim();
+
+  if (!title) { showToast('Title is required', 'warning'); return; }
+  if (!thumb) { showToast('Thumbnail URL is required', 'warning'); return; }
+  if (!video) { showToast('Episode 1 video URL is required', 'warning'); return; }
+
+  const btn = document.getElementById('addSeriesBtn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner-sm"></div> Uploading...';
+
+  try {
+    const { data, error } = await supabase
+      .from('series')
+      .insert([{ title, thumbnail: thumb, description: desc, genre, rating, quality, language: lang, release_year: year }])
+      .select();
+    if (error) throw error;
+    const series_id = data[0].id;
+    await supabase.from('episodes').insert([{ series_id, episode_number: 1, video_url: video }]);
+    showToast(`✅ "${title}" added with Episode 1!`, 'success');
+    // Clear form
+    ['s-title','s-thumb','s-video','s-desc','s-year'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('thumbPreview').style.display = 'none';
+    await loadSeriesTable();
+    await populateSeriesSelects();
+    await loadDashboard();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+  btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Series';
+}
+
+function openEditSeries(id) {
+  const s = allSeriesData.find(x => x.id === id);
+  if (!s) return;
+  editSeriesId = id;
+  document.getElementById('s-title').value   = s.title || '';
+  document.getElementById('s-thumb').value   = s.thumbnail || '';
+  document.getElementById('s-desc').value    = s.description || '';
+  document.getElementById('s-year').value    = s.release_year || '';
+  document.getElementById('s-genre').value   = s.genre || 'K-Drama';
+  document.getElementById('s-rating').value  = s.rating || 'PG-13';
+  document.getElementById('s-quality').value = s.quality || 'HD';
+  document.getElementById('s-lang').value    = s.language || 'Korean';
+  if (s.thumbnail) { document.getElementById('thumbImg').src = s.thumbnail; document.getElementById('thumbPreview').style.display = 'block'; }
+  document.getElementById('addSeriesBtn').innerHTML = '<i class="fa-solid fa-pen"></i> Update Series';
+  switchPanel('series');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Editing: ' + s.title, 'info');
+}
+
+async function updateSeries() {
+  if (!editSeriesId) return addSeries();
+  const title   = document.getElementById('s-title').value.trim();
+  const thumb   = document.getElementById('s-thumb').value.trim();
+  const genre   = document.getElementById('s-genre').value;
+  const rating  = document.getElementById('s-rating').value;
+  const quality = document.getElementById('s-quality').value;
+  const lang    = document.getElementById('s-lang').value;
+  const year    = parseInt(document.getElementById('s-year').value) || null;
+  const desc    = document.getElementById('s-desc').value.trim();
+  if (!title) { showToast('Title is required', 'warning'); return; }
+  const btn = document.getElementById('addSeriesBtn');
+  btn.disabled = true;
+  try {
+    await supabase.from('series').update({ title, thumbnail: thumb, description: desc, genre, rating, quality, language: lang, release_year: year }).eq('id', editSeriesId);
+    showToast('✅ Series updated!', 'success');
+    editSeriesId = null;
+    btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Series';
+    await loadSeriesTable(); await loadDashboard();
+  } catch(e) { showToast(e.message, 'error'); }
+  btn.disabled = false;
+}
+// Override addSeries for edit mode
+document.getElementById('addSeriesBtn')?.addEventListener('click', function() {
+  if (editSeriesId) updateSeries(); else addSeries();
+}, true);
+
+function confirmDeleteSeries(id, title) {
+  openConfirm('Delete Series?', `This will permanently delete "${title}" and all its episodes, views, likes and comments.`, '🗑️', () => deleteSeries(id));
+}
+async function deleteSeries(id) {
+  try {
+    await supabase.from('series').delete().eq('id', id);
+    showToast('🗑️ Series deleted', 'success');
+    await loadSeriesTable(); await populateSeriesSelects(); await loadDashboard();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+// ─────────────────────────────────────────────
+// EPISODES
+// ─────────────────────────────────────────────
+async function populateSeriesSelects() {
+  const { data } = await supabase.from('series').select('id,title').order('title');
+  const options  = (data||[]).map(s => `<option value="${s.id}">${escHtml(s.title)}</option>`).join('');
+  ['ep-series','ep-filter-series'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = options || '<option>No series yet</option>';
+  });
+  if (data?.length) { await getNextEpNumber(data[0].id); await loadEpisodeTable(); }
+}
+
+async function getNextEpNumber(seriesId) {
+  const { data } = await supabase.from('episodes').select('episode_number').eq('series_id', seriesId).order('episode_number', { ascending: false }).limit(1);
+  const next = data?.length ? data[0].episode_number + 1 : 1;
+  document.getElementById('ep-num').value = next;
+}
+
+document.getElementById('ep-series')?.addEventListener('change', function() {
+  getNextEpNumber(this.value);
+});
+
+async function addEpisode() {
+  const series_id  = document.getElementById('ep-series').value;
+  const video_url  = document.getElementById('ep-url').value.trim();
+  const epTitle    = document.getElementById('ep-title').value.trim();
+  const duration   = document.getElementById('ep-duration').value.trim();
+  const epNum      = parseInt(document.getElementById('ep-num').value);
+  if (!series_id) { showToast('Select a series', 'warning'); return; }
+  if (!video_url) { showToast('Video URL is required', 'warning'); return; }
+  const btn = document.getElementById('addEpBtn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner-sm"></div> Adding...';
+  try {
+    await supabase.from('episodes').insert([{ series_id: parseInt(series_id), episode_number: epNum, video_url, title: epTitle || null, duration: duration || null }]);
+    showToast(`✅ Episode ${epNum} added!`, 'success');
+    document.getElementById('ep-url').value   = '';
+    document.getElementById('ep-title').value = '';
+    await getNextEpNumber(series_id);
+    await loadEpisodeTable();
+    await loadDashboard();
+  } catch(e) { showToast(e.message, 'error'); }
+  btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-plus"></i> Add Episode';
+}
+
+async function loadEpisodeTable() {
+  const filterEl = document.getElementById('ep-filter-series');
+  const seriesId = filterEl?.value;
+  if (!seriesId) return;
+  document.getElementById('epTableBody').innerHTML =
+    `<tr class="loading-row"><td colspan="7"><div class="spinner-sm"></div></td></tr>`;
+  const [epsRes, seriesRes] = await Promise.all([
+    supabase.from('episodes').select('*').eq('series_id', seriesId).order('episode_number'),
+    supabase.from('series').select('title').eq('id', seriesId).single()
+  ]);
+  const eps = epsRes.data || [];
+  allEpisodesData = eps;
+  const seriesTitle = seriesRes.data?.title || '—';
+  const body = document.getElementById('epTableBody');
+  if (!eps.length) {
+    body.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#555;padding:30px">No episodes yet</td></tr>`;
+    return;
+  }
+  // Get view counts per episode
+  const epIds = eps.map(e => e.id);
+  const { data: viewCounts } = await supabase.from('views').select('episode_id').in('episode_id', epIds);
+  const vcMap = {};
+  (viewCounts||[]).forEach(v => { vcMap[v.episode_id] = (vcMap[v.episode_id]||0)+1; });
+
+  body.innerHTML = eps.map(ep => {
+    const shortUrl = ep.video_url?.length > 40 ? ep.video_url.substr(0,40)+'…' : ep.video_url;
+    return `
+    <tr>
+      <td><span class="badge badge-red">EP ${ep.episode_number}</span></td>
+      <td style="color:#888;font-size:12px">${escHtml(seriesTitle)}</td>
+      <td>${escHtml(ep.title||'—')}</td>
+      <td>${escHtml(ep.duration||'—')}</td>
+      <td><span style="font-size:11px;color:#666" title="${escHtml(ep.video_url)}">${escHtml(shortUrl||'')}</span></td>
+      <td><i class="fa-solid fa-eye fa-xs mr-1" style="color:#10b981"></i>${vcMap[ep.id]||0}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteEpisode(${ep.id},${ep.episode_number})">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function confirmDeleteEpisode(id, num) {
+  openConfirm('Delete Episode?', `Delete Episode ${num}? This will also remove all view records for this episode.`, '🎬', () => deleteEpisode(id));
+}
+async function deleteEpisode(id) {
+  await supabase.from('episodes').delete().eq('id', id);
+  showToast('Episode deleted', 'success');
+  await loadEpisodeTable(); await loadDashboard();
+}
+
+// ─────────────────────────────────────────────
+// COMMENTS
+// ─────────────────────────────────────────────
+async function loadComments() {
+  document.getElementById('commentsBody').innerHTML =
+    `<tr class="loading-row"><td colspan="5"><div class="spinner-sm"></div></td></tr>`;
+  const { data: comments } = await supabase.from('comments').select(`*, series(title)`).order('created_at', { ascending: false });
+  allCommentsData = comments || [];
+  renderCommentsTable(allCommentsData);
+}
+function renderCommentsTable(data) {
+  const body = document.getElementById('commentsBody');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#555;padding:30px">No comments yet</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(c => `
+    <tr>
+      <td>
+        <div style="font-weight:600;font-size:13px">${escHtml(c.user_name||'Anonymous')}</div>
+      </td>
+      <td><span class="badge badge-blue" style="font-size:11px">${escHtml(c.series?.title||'—')}</span></td>
+      <td><span style="font-size:13px;color:#ccc">${escHtml(c.comment)}</span></td>
+      <td style="color:#666;font-size:12px;white-space:nowrap">${fmtDate(c.created_at)}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteComment(${c.id})">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+function filterComments() {
+  const q = document.getElementById('commentsSearch').value.toLowerCase();
+  renderCommentsTable(allCommentsData.filter(c =>
+    c.user_name?.toLowerCase().includes(q) || c.comment?.toLowerCase().includes(q)
+  ));
+}
+function confirmDeleteComment(id) {
+  openConfirm('Delete Comment?', 'This will permanently delete this comment.', '💬', () => deleteComment(id));
+}
+async function deleteComment(id) {
+  await supabase.from('comments').delete().eq('id', id);
+  showToast('Comment deleted', 'success');
+  await loadComments();
+}
+
+// ─────────────────────────────────────────────
+// ANALYTICS
+// ─────────────────────────────────────────────
+async function renderAnalyticsCharts() {
+  let { data } = await supabase.from('series_stats').select('*').order('view_count', { ascending: false }).limit(10);
+  if (!data) return;
+
+  const labels = data.map(s => s.title.length > 16 ? s.title.substr(0,16)+'…' : s.title);
+  const chartDefaults = {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { color:'#888', font:{ size:10 } }, grid: { color:'rgba(255,255,255,0.03)' } },
+      y: { ticks: { color:'#888' }, grid: { color:'rgba(255,255,255,0.05)' } }
+    }
+  };
+
+  // Top Views
+  const tvCtx = document.getElementById('chartTopViews').getContext('2d');
+  if (topViewsChart) topViewsChart.destroy();
+  topViewsChart = new Chart(tvCtx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label:'Views', data: data.map(s=>s.view_count||0),
+        backgroundColor: data.map((_,i) => `hsl(${0 + i*8},85%,55%)`), borderRadius:6 }]
+    },
+    options: chartDefaults
+  });
+
+  // Top Likes
+  const sortedLikes = [...data].sort((a,b) => b.like_count - a.like_count);
+  const tlCtx = document.getElementById('chartTopLikes').getContext('2d');
+  if (topLikesChart) topLikesChart.destroy();
+  topLikesChart = new Chart(tlCtx, {
+    type: 'bar',
+    data: {
+      labels: sortedLikes.map(s => s.title.length>14?s.title.substr(0,14)+'…':s.title),
+      datasets: [{ data: sortedLikes.map(s=>s.like_count||0),
+        backgroundColor:'rgba(245,197,24,0.7)', borderRadius:6 }]
+    },
+    options: { ...chartDefaults, indexAxis:'y' }
+  });
+
+  // Top Comments
+  const sortedC = [...data].sort((a,b) => b.comment_count - a.comment_count);
+  const tcCtx = document.getElementById('chartTopComments').getContext('2d');
+  if (topCommentsChart) topCommentsChart.destroy();
+  topCommentsChart = new Chart(tcCtx, {
+    type: 'bar',
+    data: {
+      labels: sortedC.map(s => s.title.length>14?s.title.substr(0,14)+'…':s.title),
+      datasets: [{ data: sortedC.map(s=>s.comment_count||0),
+        backgroundColor:'rgba(139,92,246,0.7)', borderRadius:6 }]
+    },
+    options: { ...chartDefaults, indexAxis:'y' }
+  });
+}
+</script>
+</body>
+</html>
