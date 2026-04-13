@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-TV | Watch K-Dramas, Chinese & Korean Shows</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@400;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  
+  * { box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #e50914; border-radius: 4px; }
+
+  /* ── Header ── */
+  #navbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    padding: 16px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background 0.4s;
+  }
+  #navbar.scrolled {
+    background: rgba(10,10,15,0.97);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.6);
+  }
+  .nav-logo {
+    font-size: 28px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+  .nav-links a {
+    color: #ccc; text-decoration: none; margin-left: 20px;
+    font-size: 14px; font-weight: 500; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: #fff; }
+  .search-box {
+    display: flex; align-items: center;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 6px 14px; gap: 8px;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s;
+  }
+  .search-box:focus-within {
+    background: rgba(255,255,255,0.15);
+    border-color: #e50914;
+    box-shadow: 0 0 0 2px rgba(229,9,20,0.2);
+  }
+  .search-box input {
+    background: transparent; border: none; outline: none;
+    color: #fff; font-size: 14px; width: 200px;
+  }
+  .search-box input::placeholder { color: #888; }
+
+  /* ── Hero Banner ── */
+  #hero {
+    position: relative; height: 85vh; min-height: 500px;
+    display: flex; align-items: flex-end;
+    overflow: hidden;
+  }
+  #heroBg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: all 1s ease;
+  }
+  #heroBg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(10,10,15,0.95) 0%,
+      rgba(10,10,15,0.6) 50%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(10,10,15,1) 0%,
+      transparent 40%
+    );
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    padding: 0 40px 60px;
+    max-width: 600px;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(229,9,20,0.9); color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 4px 12px; border-radius: 4px; margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .hero-title {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900; line-height: 1.1;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  }
+  .hero-meta {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 13px; color: #aaa; margin-bottom: 16px;
+  }
+  .hero-meta span { display: flex; align-items: center; gap: 5px; }
+  .hero-desc {
+    font-size: 14px; color: #ccc; line-height: 1.7;
+    margin-bottom: 24px;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-play {
+    display: flex; align-items: center; gap: 10px;
+    background: #e50914; color: #fff;
+    padding: 12px 28px; border-radius: 8px;
+    font-weight: 700; font-size: 15px;
+    border: none; cursor: pointer;
+    transition: all 0.2s; text-decoration: none;
+  }
+  .btn-play:hover { background: #ff1a27; transform: scale(1.03); }
+  .btn-info {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    color: #fff; padding: 12px 24px; border-radius: 8px;
+    font-weight: 600; font-size: 15px;
+    border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-info:hover { background: rgba(255,255,255,0.25); }
+
+  /* ── Tabs / Genre Filter ── */
+  .genre-tabs {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 4px 0; scrollbar-width: none;
+  }
+  .genre-tabs::-webkit-scrollbar { display: none; }
+  .genre-tab {
+    flex-shrink: 0; padding: 8px 20px; border-radius: 50px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: transparent; color: #aaa;
+    transition: all 0.2s;
+  }
+  .genre-tab:hover { border-color: #e50914; color: #fff; }
+  .genre-tab.active {
+    background: #e50914; border-color: #e50914; color: #fff;
+  }
+
+  /* ── Series Row ── */
+  .section-title {
+    font-size: 20px; font-weight: 800;
+    margin-bottom: 16px; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: ''; display: block;
+    width: 4px; height: 22px;
+    background: #e50914; border-radius: 2px;
+  }
+  .cards-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── Card ── */
+  .card {
+    position: relative; border-radius: 10px;
+    overflow: hidden; cursor: pointer;
+    background: #1a1a2e;
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-decoration: none; display: block;
+  }
+  .card:hover {
+    transform: scale(1.06) translateY(-4px);
+    box-shadow: 0 16px 40px rgba(229,9,20,0.25);
+    z-index: 10;
+  }
+  .card img {
+    width: 100%; height: 225px;
+    object-fit: cover; display: block;
+    transition: opacity 0.3s;
+  }
+  .card-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.95));
+    padding: 30px 10px 10px;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .card:hover .card-overlay { opacity: 1; }
+  .card-title {
+    font-size: 13px; font-weight: 700;
+    margin-bottom: 5px; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-meta {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    font-size: 11px; color: #aaa;
+  }
+  .card-meta span { display: flex; align-items: center; gap: 3px; }
+  .badge-rating {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .badge-quality {
+    position: absolute; top: 8px; right: 8px;
+    background: #e50914; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 4px;
+  }
+  .badge-new {
+    position: absolute; top: 36px; right: 8px;
+    background: #ff6b35; color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* ── Stats bar ── */
+  .card-stats {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+  }
+  .stat-item {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 11px; color: #ccc;
+  }
+  .stat-item i { font-size: 10px; color: #e50914; }
+
+  /* ── Loading Skeleton ── */
+  .skeleton {
+    background: linear-gradient(90deg, #1a1a2e 25%, #252545 50%, #1a1a2e 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 10px; height: 225px;
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: #0d0d0d; margin-top: 60px;
+    padding: 40px; text-align: center;
+    border-top: 1px solid #1f1f1f;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center; padding: 60px 20px; color: #555;
+  }
+  .empty-state i { font-size: 48px; margin-bottom: 16px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    #navbar { padding: 12px 16px; }
+    .nav-links { display: none; }
+    .hero-content { padding: 0 16px 40px; }
+    .search-box input { width: 140px; }
+    .cards-row { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .card img { height: 190px; }
+  }
+  @media (max-width: 480px) {
+    .cards-row { grid-template-columns: repeat(2, 1fr); }
+    .hero-btns .btn-info { display: none; }
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1f1f2e; border: 1px solid #333;
+    color: #fff; padding: 12px 24px; border-radius: 10px;
+    font-size: 14px; z-index: 9999;
+    transition: transform 0.3s; pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* scroll fade-in */
+  .fade-in {
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+</style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+
+<body>
+
+<!-- ── Navbar ── -->
+<nav id="navbar">
+  <div class="nav-logo">K·TV</div>
+
+  <div class="nav-links hidden md:flex items-center">
+    <a href="index.html"><i class="fa-solid fa-house mr-1"></i> Home</a>
+    <a href="#kdrama">K-Drama</a>
+    <a href="#cdrama">C-Drama</a>
+    <a href="#movies">Movies</a>
+    <a href="admin.html"><i class="fa-solid fa-shield-halved mr-1"></i> Admin</a>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+      <input type="text" id="searchInput" placeholder="Search series...">
+    </div>
+    <a href="https://t.me/KTV_Live" target="_blank"
+       class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-500 transition">
+      <i class="fab fa-telegram text-white text-sm"></i>
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="hero">
+  <div id="heroBg"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><i class="fa-solid fa-fire-flame-curved"></i> Trending Now</div>
+    <h1 class="hero-title" id="heroTitle">Loading...</h1>
+    <div class="hero-meta">
+      <span><i class="fa-solid fa-star" style="color:#f5c518"></i> <span id="heroRating">PG-13</span></span>
+      <span><i class="fa-solid fa-film"></i> <span id="heroGenre">K-Drama</span></span>
+      <span><i class="fa-solid fa-eye"></i> <span id="heroViews">0</span> views</span>
+      <span><i class="fa-solid fa-heart" style="color:#e50914"></i> <span id="heroLikes">0</span></span>
+    </div>
+    <p class="hero-desc" id="heroDesc">The best K-Drama series streaming platform.</p>
+    <div class="hero-btns">
+      <a id="heroPlayBtn" href="#" class="btn-play">
+        <i class="fa-solid fa-play"></i> Watch Now
+      </a>
+      <button class="btn-info" onclick="scrollToMain()">
+        <i class="fa-solid fa-circle-info"></i> Browse All
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main Content ── -->
+<main id="main" class="px-4 md:px-10 py-8 space-y-12">
+
+  <!-- Genre Tabs -->
+  <div class="fade-in">
+    <div class="genre-tabs" id="genreTabs">
+      <button class="genre-tab active" data-genre="all">🌟 All</button>
+      <button class="genre-tab" data-genre="K-Drama">🇰🇷 K-Drama</button>
+      <button class="genre-tab" data-genre="C-Drama">🇨🇳 C-Drama</button>
+      <button class="genre-tab" data-genre="J-Drama">🇯🇵 J-Drama</button>
+      <button class="genre-tab" data-genre="Thai Drama">🇹🇭 Thai Drama</button>
+      <button class="genre-tab" data-genre="Movie">🎬 Movies</button>
+      <button class="genre-tab" data-genre="Variety">🎭 Variety</button>
+    </div>
+  </div>
+
+  <!-- All Series Grid -->
+  <section class="fade-in">
+    <div class="section-title" id="sectionLabel">All Series</div>
+    <div class="cards-row" id="seriesGrid">
+      <!-- Skeletons -->
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+    <div id="emptyState" class="empty-state hidden">
+      <i class="fa-solid fa-film"></i>
+      <p class="text-lg font-semibold">No series found</p>
+      <p class="text-sm mt-2">Try a different genre or search term</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="nav-logo text-center mb-3" style="display:inline-block">K·TV</div>
+  <p class="text-gray-500 text-sm">© 2025 K-TV Streaming. All rights reserved.</p>
+  <p class="text-gray-600 text-xs mt-2">
+    <a href="https://t.me/KTV_Live" target="_blank" class="hover:text-blue-400">
+      <i class="fab fa-telegram mr-1"></i>Join our Telegram
+    </a>
+  </p>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// SUPABASE CONFIG — Replace with your credentials
+// ─────────────────────────────────────────────
+const SUPABASE_URL  = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON = "YOUR_ANON_KEY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ─── Session ID ───
+let SESSION_ID = localStorage.getItem('ktv_session');
+if (!SESSION_ID) {
+  SESSION_ID = 'u_' + Math.random().toString(36).substr(2,12) + Date.now();
+  localStorage.setItem('ktv_session', SESSION_ID);
+}
+
+// ─── State ───
+let allSeries = [];
+let activeGenre = 'all';
+let searchTerm  = '';
+
+// ─── Navbar scroll effect ───
+window.addEventListener('scroll', () => {
+  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// ─── Scroll to main ───
+function scrollToMain() {
+  document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ─── Toast ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── Format number ───
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
+  return n || 0;
+}
+
+// ─── Is new (within 7 days) ───
+function isNew(created_at) {
+  const diff = (Date.now() - new Date(created_at)) / 86400000;
+  return diff <= 7;
+}
+
+// ─── Render Hero ───
+function renderHero(series) {
+  if (!series) return;
+  const bg = document.getElementById('heroBg');
+  bg.style.backgroundImage = `url('${series.thumbnail}')`;
+  document.getElementById('heroTitle').textContent = series.title;
+  document.getElementById('heroRating').textContent = series.rating || 'PG-13';
+  document.getElementById('heroGenre').textContent = series.genre || 'K-Drama';
+  document.getElementById('heroViews').textContent = fmtNum(series.view_count);
+  document.getElementById('heroLikes').textContent = fmtNum(series.like_count);
+  document.getElementById('heroDesc').textContent = series.description || 'Stream the best Asian dramas in HD quality.';
+  document.getElementById('heroPlayBtn').href = `series.html?id=${series.id}`;
+}
+
+// ─── Render Cards ───
+function renderCards(list) {
+  const grid  = document.getElementById('seriesGrid');
+  const empty = document.getElementById('emptyState');
+  grid.innerHTML = '';
+
+  if (!list.length) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  list.forEach(s => {
+    const newBadge = isNew(s.created_at) ? `<span class="badge-new">NEW</span>` : '';
+    const card = document.createElement('a');
+    card.href = `series.html?id=${s.id}`;
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${s.thumbnail || 'https://via.placeholder.com/300x450/1a1a2e/fff?text=K-TV'}"
+           alt="${s.title}" loading="lazy"
+           onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/fff?text=K-TV'">
+      <span class="badge-rating">${s.rating || 'PG-13'}</span>
+      <span class="badge-quality">${s.quality || 'HD'}</span>
+      ${newBadge}
+      <div class="card-overlay">
+        <div class="card-title">${s.title}</div>
+        <div class="card-meta">
+          <span><i class="fa-solid fa-film"></i> ${s.episode_count || 0} eps</span>
+          <span><i class="fa-solid fa-earth-asia"></i> ${s.language || 'Korean'}</span>
+        </div>
+      </div>
+      <div class="card-stats">
+        <span class="stat-item"><i class="fa-solid fa-eye"></i> ${fmtNum(s.view_count)}</span>
+        <span class="stat-item"><i class="fa-solid fa-heart"></i> ${fmtNum(s.like_count)}</span>
+        <span class="stat-item"><i class="fa-solid fa-comment"></i> ${fmtNum(s.comment_count)}</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─── Filter logic ───
+function applyFilter() {
+  let list = [...allSeries];
+  if (activeGenre !== 'all') list = list.filter(s => s.genre === activeGenre);
+  if (searchTerm) list = list.filter(s => s.title.toLowerCase().includes(searchTerm));
+  const label = activeGenre === 'all' ? 'All Series' : activeGenre;
+  document.getElementById('sectionLabel').textContent = searchTerm
+    ? `Search: "${searchTerm}"`
+    : label;
+  renderCards(list);
+}
+
+// ─── Genre tabs ───
+document.getElementById('genreTabs').addEventListener('click', e => {
+  const tab = e.target.closest('.genre-tab');
+  if (!tab) return;
+  document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  activeGenre = tab.dataset.genre;
+  applyFilter();
+});
+
+// ─── Search ───
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchTerm = e.target.value.toLowerCase().trim();
+  applyFilter();
+});
+
+// ─── Load Data ───
+async function loadData() {
+  try {
+    // Try series_stats view first (has counts)
+    let { data, error } = await supabase
+      .from('series_stats')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      // Fallback: plain series table
+      const res = await supabase.from('series').select('*').order('id', { ascending: false });
+      data = (res.data || []).map(s => ({ ...s, view_count: 0, like_count: 0, comment_count: 0, episode_count: 0 }));
+    }
+
+    allSeries = data || [];
+
+    // Hero: pick the most viewed or first
+    const hero = allSeries.reduce((best, s) => (!best || (s.view_count > best.view_count) ? s : best), null);
+    renderHero(hero);
+    applyFilter();
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('seriesGrid').innerHTML =
+      `<p class="text-red-400 col-span-full text-center py-8">
+        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
+        Could not load series. Check Supabase config.
+      </p>`;
+  }
+}
+
+// ─── Fade-in on scroll ───
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Hero auto-rotate every 7s
+let heroIdx = 0;
+function rotateHero() {
+  if (!allSeries.length) return;
+  heroIdx = (heroIdx + 1) % Math.min(allSeries.length, 6);
+  renderHero(allSeries[heroIdx]);
+}
+setInterval(rotateHero, 7000);
+
+loadData();
+</script>
+</body>
+</html>
