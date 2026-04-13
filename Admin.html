@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-TV Admin Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #fff; min-height: 100vh; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #e50914; border-radius: 4px; }
+
+  /* ── Layout ── */
+  .admin-layout { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .admin-sidebar {
+    width: 240px; background: #0f0f1a;
+    border-right: 1px solid rgba(255,255,255,0.05);
+    padding: 20px 0; position: fixed; top: 0; left: 0; bottom: 0;
+    display: flex; flex-direction: column; z-index: 50;
+    transition: transform 0.3s;
+  }
+  .admin-sidebar.collapsed { transform: translateX(-240px); }
+  .sidebar-logo {
+    font-size: 22px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, #e50914, #ff6b35);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    padding: 0 20px; margin-bottom: 4px;
+  }
+  .sidebar-subtitle {
+    font-size: 10px; color: #555; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0 20px; margin-bottom: 24px;
+  }
+  .nav-section-label {
+    font-size: 10px; color: #444; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 0 20px; margin: 16px 0 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 20px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: #777;
+    transition: all 0.2s; border-left: 3px solid transparent;
+    text-decoration: none;
+  }
+  .nav-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+  .nav-item.active {
+    color: #fff; background: rgba(229,9,20,0.1);
+    border-left-color: #e50914;
+  }
+  .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+  .sidebar-footer {
+    margin-top: auto; padding: 16px 20px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+
+  /* ── Main Content ── */
+  .admin-main {
+    margin-left: 240px; flex: 1;
+    display: flex; flex-direction: column; min-height: 100vh;
+    transition: margin-left 0.3s;
+  }
+  .admin-main.full { margin-left: 0; }
+
+  /* ── Topbar ── */
+  .admin-topbar {
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 40;
+  }
+  .page-title { font-size: 18px; font-weight: 700; }
+  .admin-badge {
+    background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.3);
+    color: #ff6b6b; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px;
+  }
+
+  /* ── Panels ── */
+  .panel { display: none; padding: 24px; }
+  .panel.active { display: block; }
+
+  /* ── Stat Cards ── */
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px; padding: 20px;
+    display: flex; align-items: center; gap: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .stat-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .stat-val { font-size: 26px; font-weight: 800; }
+  .stat-lbl { font-size: 12px; color: #666; margin-top: 2px; }
+  .stat-trend { font-size: 11px; color: #22c55e; margin-top: 4px; }
+
+  /* ── Cards/Forms ── */
+  .admin-card {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; overflow: hidden; margin-bottom: 20px;
+  }
+  .card-header {
+    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title i { color: #e50914; }
+  .card-body { padding: 20px; }
+
+  /* Form inputs */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-input {
+    background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: #e50914; background: rgba(255,255,255,0.06); }
+  .form-input::placeholder { color: #444; }
+  .form-select {
+    background: #1a1a2e; border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; cursor: pointer; transition: border-color 0.2s;
+  }
+  .form-select:focus { border-color: #e50914; }
+  .form-textarea {
+    background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 10px 14px;
+    color: #fff; font-size: 14px; font-family: 'Inter', sans-serif;
+    outline: none; resize: vertical; min-height: 80px;
+    transition: border-color 0.2s; width: 100%;
+  }
+  .form-textarea:focus { border-color: #e50914; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: #e50914; color: #fff; }
+  .btn-primary:hover { background: #ff1a27; transform: translateY(-1px); }
+  .btn-success { background: #059669; color: #fff; }
+  .btn-success:hover { background: #10b981; }
+  .btn-warning { background: #d97706; color: #fff; }
+  .btn-warning:hover { background: #f59e0b; }
+  .btn-danger { background: rgba(229,9,20,0.15); border: 1px solid rgba(229,9,20,0.3); color: #ff6b6b; }
+  .btn-danger:hover { background: #e50914; color: #fff; }
+  .btn-ghost { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #ccc; }
+  .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* ── Table ── */
+  .admin-table { width: 100%; border-collapse: collapse; }
+  .admin-table th {
+    text-align: left; padding: 12px 16px;
+    font-size: 11px; font-weight: 700; color: #555;
+    letter-spacing: 1px; text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.02);
+  }
+  .admin-table td {
+    padding: 12px 16px; font-size: 13px; color: #ccc;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+  }
+  .admin-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── Thumbnail preview ── */
+  .thumb-preview { width: 48px; height: 68px; object-fit: cover; border-radius: 6px; }
+
+  /* ── Badge ── */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+  .badge-red { background: rgba(229,9,20,0.15); color: #ff6b6b; }
+  .badge-blue { background: rgba(59,130,246,0.15); color: #7eb8ff; }
+  .badge-green { background: rgba(5,150,105,0.15); color: #34d399; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #1f1f2e; border: 1px solid #333;
+    color: #fff; padding: 12px 20px; border-radius: 10px;
+    font-size: 13px; z-index: 9999;
+    transform: translateY(100px); transition: transform 0.3s;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    max-width: 340px;
+  }
+  .toast.show { transform: translateY(0); }
+
+  /* ── Confirm Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: #12121e; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 32px; max-width: 380px; width: 90%;
+    text-align: center;
+  }
+  .modal-icon { font-size: 40px; margin-bottom: 16px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-desc { font-size: 13px; color: #888; margin-bottom: 24px; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+
+  /* ── Mobile ── */
+  @media (max-width: 768px) {
+    .admin-sidebar { transform: translateX(-240px); }
+    .admin-sidebar.open { transform: translateX(0); }
+    .admin-main { margin-left: 0; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── Loading ── */
+  .spinner-sm { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(229,9,20,0.2); border-top-color: #e50914; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-row td { padding: 40px !important; text-align: center; color: #555; }
+
+  .img-preview-wrap { margin-top: 8px; }
+  .img-preview-wrap img { width: 80px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+
+<div class="admin-layout" id="adminApp">
+
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">K·TV</div>
+    <div class="sidebar-subtitle">Admin Panel</div>
+
+    <div class="nav-section-label">Main</div>
+    <a class="nav-item active" data-panel="dashboard" onclick="switchPanel('dashboard')">
+      <i class="fa-solid fa-gauge-high"></i> Dashboard
+    </a>
+    <a class="nav-item" data-panel="series" onclick="switchPanel('series')">
+      <i class="fa-solid fa-film"></i> Series
+    </a>
+    <a class="nav-item" data-panel="episodes" onclick="switchPanel('episodes')">
+      <i class="fa-solid fa-play-circle"></i> Episodes
+    </a>
+
+    <div class="nav-section-label">Engagement</div>
+    <a class="nav-item" data-panel="comments" onclick="switchPanel('comments')">
+      <i class="fa-solid fa-comments"></i> Comments
+    </a>
+    <a class="nav-item" data-panel="analytics" onclick="switchPanel('analytics')">
+      <i class="fa-solid fa-chart-line"></i> Analytics
+    </a>
+
+    <div class="nav-section-label">Site</div>
+    <a class="nav-item" href="index.html" target="_blank">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> View Site
+    </a>
+  </aside>
+
+  <div class="admin-main" id="adminMain">
+
+    <div class="admin-topbar">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="btn btn-ghost btn-sm lg:hidden">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="page-title" id="pageTitle">Dashboard</div>
+      </div>
+      <div class="flex items-center gap-10">
+        <span class="admin-badge"><i class="fa-solid fa-shield-halved mr-1"></i> ADMIN</span>
+        <a href="index.html" class="btn btn-ghost btn-sm hidden md:flex">
+          <i class="fa-solid fa-globe"></i> View Site
+        </a>
+      </div>
+    </div>
+
+    <div class="panel active" id="panel-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(229,9,20,0.15)"><i class="fa-solid fa-film" style="color:#e50914"></i></div>
+          <div><div class="stat-val" id="ds-series">—</div><div class="stat-lbl">Total Series</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(59,130,246,0.15)"><i class="fa-solid fa-play-circle" style="color:#3b82f6"></i></div>
+          <div><div class="stat-val" id="ds-episodes">—</div><div class="stat-lbl">Total Episodes</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(5,150,105,0.15)"><i class="fa-solid fa-eye" style="color:#10b981"></i></div>
+          <div><div class="stat-val" id="ds-views">—</div><div class="stat-lbl">Total Views</div></div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Recently Added Series</div>
+        </div>
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Views</th><th>Actions</th></tr></thead>
+            <tbody id="recentSeriesBody"><tr class="loading-row"><td colspan="5"><div class="spinner-sm"></div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-series">
+      <div class="admin-card">
+        <div class="card-header"><div class="card-title"><i class="fa-solid fa-plus-circle"></i> Manage Series</div></div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Title *</label><input type="text" id="s-title" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Genre</label><select id="s-genre" class="form-select"><option>K-Drama</option><option>C-Drama</option><option>Movie</option></select></div>
+            <div class="form-group"><label class="form-label">Thumbnail URL *</label><input type="url" id="s-thumb" class="form-input" oninput="previewThumb(this)"></div>
+            <div class="form-group"><label class="form-label">Initial Video URL</label><input type="url" id="s-video" class="form-input" placeholder="For Episode 1"></div>
+          </div>
+          <div style="margin-top:16px"><button class="btn btn-primary" onclick="addSeries()" id="addSeriesBtn">Save Series</button></div>
+        </div>
+      </div>
+      <div class="admin-card">
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="admin-table">
+            <thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Actions</th></tr></thead>
+            <tbody id="seriesTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-episodes">
+       <div class="admin-card"><div class="card-body">Select a series in the sidebar or series list to manage episodes.</div></div>
+    </div>
+    <div class="panel" id="panel-comments"><div id="commentsBody"></div></div>
+    <div class="panel" id="panel-analytics"><canvas id="chartTopViews"></canvas></div>
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Confirm</div>
+    <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="modalConfirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<script>
+const SUPABASE_URL  = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_ANON = "YOUR_ANON_KEY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+let allSeriesData = [];
+
+async function initAdmin() {
+  await loadDashboard();
+  await loadSeriesTable();
+}
+
+// Automatically start on load
+window.onload = initAdmin;
+
+function switchPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
+}
+
+async function loadDashboard() {
+  const { count: sCount } = await supabase.from('series').select('*', { count: 'exact', head: true });
+  const { count: eCount } = await supabase.from('episodes').select('*', { count: 'exact', head: true });
+  
+  document.getElementById('ds-series').textContent = sCount || 0;
+  document.getElementById('ds-episodes').textContent = eCount || 0;
+}
+
+async function loadSeriesTable() {
+  const { data } = await supabase.from('series').select('*').order('created_at', { ascending: false });
+  allSeriesData = data || [];
+  const body = document.getElementById('seriesTableBody');
+  body.innerHTML = allSeriesData.map(s => `
+    <tr>
+      <td><img src="${s.thumbnail}" class="thumb-preview"></td>
+      <td>${s.title}</td>
+      <td>${s.genre}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteSeries(${s.id})">Delete</button></td>
+    </tr>
+  `).join('');
+}
+
+async function addSeries() {
+  const title = document.getElementById('s-title').value;
+  const thumb = document.getElementById('s-thumb').value;
+  if(!title || !thumb) return alert("Fill required fields");
+
+  await supabase.from('series').insert([{ title, thumbnail: thumb, genre: document.getElementById('s-genre').value }]);
+  loadSeriesTable();
+}
+
+async function deleteSeries(id) {
+  if(!confirm("Delete this series?")) return;
+  await supabase.from('series').delete().eq('id', id);
+  loadSeriesTable();
+}
+
+function toggleSidebar() { document.getElementById('adminSidebar').classList.toggle('open'); }
+function closeModal() { document.getElementById('confirmModal').classList.remove('open'); }
+function previewThumb(el) { /* logic */ }
+</script>
+</body>
+        </html>
+
