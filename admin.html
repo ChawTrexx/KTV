@@ -301,7 +301,7 @@
 
 
 <!-- ── Admin App ── -->
-<div class="admin-layout" id="adminApp" style="display:none">
+<div class="admin-layout" id="adminApp" style="">
 
   <!-- Sidebar -->
   <aside class="admin-sidebar" id="adminSidebar">
@@ -714,34 +714,10 @@ let viewsChart, genreChart, topViewsChart, topLikesChart, topCommentsChart;
 
 // ─────────────────────────────────────────────
 // AUTH
-// ─────────────────────────────────────────────
-function doLogin() {
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value.trim();
-  if (u === ADMIN_USER && p === ADMIN_PASS) {
-    sessionStorage.setItem('ktv_admin', '1');
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminApp').style.display = 'flex';
-    initAdmin();
-  } else {
-    document.getElementById('loginErr').style.display = 'block';
-    document.getElementById('loginPass').value = '';
-  }
-}
-document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+// ───────────────────────────────// Sirf ye line rakhein taaki initialization bina login ke start ho jaye
+window.onload = initAdmin;
+──────────────
 
-function doLogout() {
-  sessionStorage.removeItem('ktv_admin');
-  location.reload();
-}
-
-// Check if already logged in
-if (sessionStorage.getItem('ktv_admin') === '1') {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminApp').style.display = 'flex';
-  initAdmin();
-}
 
 // ─────────────────────────────────────────────
 // INIT
