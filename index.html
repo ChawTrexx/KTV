@@ -544,9 +544,9 @@ async function loadData() {
   try {
     // Try series_stats view first (has counts)
     let { data, error } = await supabase
-      .from('series_stats')
-      .select('*')
-      .order('id', { ascending: false });
+  .from('series')
+  .select('*')
+  .order('id', { ascending: false });
 
     if (error) {
       // Fallback: plain series table
