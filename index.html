@@ -406,156 +406,176 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+
 <script>
 // ─────────────────────────────────────────────
-// SUPABASE CONFIG — Replace with your credentials
+// SUPABASE CONFIG
 // ─────────────────────────────────────────────
 const SUPABASE_URL  = "https://sijqvbwghwcrzfvvlbey.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpanF2YndnaHdjcnpmdnZsYmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwOTM3NDcsImV4cCI6MjA5MTY2OTc0N30.yC2q8K03r9lWV9ru_oSwgnYdewB1BvZiHQWZ1pVHkUg";
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// ─── Session ID ───
+// ─── SESSION ID ───
 let SESSION_ID = localStorage.getItem('ktv_session');
 if (!SESSION_ID) {
   SESSION_ID = 'u_' + Math.random().toString(36).substr(2,12) + Date.now();
   localStorage.setItem('ktv_session', SESSION_ID);
 }
 
-// ─── State ───
+// ─── STATE ───
 let allSeries = [];
 let activeGenre = 'all';
 let searchTerm  = '';
 
-// ─── Navbar scroll effect ───
+// ─── NAVBAR SCROLL ───
 window.addEventListener('scroll', () => {
-  document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  document.getElementById('navbar')
+    .classList.toggle('scrolled', window.scrollY > 50);
 });
 
-// ─── Scroll to main ───
-function scrollToMain() {
-  document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ─── Toast ───
+// ─── TOAST ───
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ─── Format number ───
+// ─── FORMAT NUM ───
 function fmtNum(n) {
+  if (!n) return 0;
   if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
-  return n || 0;
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n;
 }
 
-// ─── Is new (within 7 days) ───
-function isNew(created_at) {
-  const diff = (Date.now() - new Date(created_at)) / 86400000;
-  return diff <= 7;
+// ─── NEW BADGE ───
+function isNew(date) {
+  if (!date) return false;
+  return (Date.now() - new Date(date)) < 7 * 86400000;
 }
 
-// ─── Render Hero ───
-function renderHero(series) {
-  if (!series) return;
-  const bg = document.getElementById('heroBg');
-  bg.style.backgroundImage = `url('${series.thumbnail}')`;
-  document.getElementById('heroTitle').textContent = series.title;
-  document.getElementById('heroRating').textContent = series.rating || 'PG-13';
-  document.getElementById('heroGenre').textContent = series.genre || 'K-Drama';
-  document.getElementById('heroViews').textContent = fmtNum(series.view_count);
-  document.getElementById('heroLikes').textContent = fmtNum(series.like_count);
-  document.getElementById('heroDesc').textContent = series.description || 'Stream the best Asian dramas in HD quality.';
-  document.getElementById('heroPlayBtn').href = `series.html?id=${series.id}`;
+// ─── HERO ───
+function renderHero(s) {
+  if (!s) return;
+
+  document.getElementById('heroBg').style.backgroundImage =
+    `url('${s.thumbnail || 'https://via.placeholder.com/800x500'}')`;
+
+  document.getElementById('heroTitle').textContent = s.title || 'No Title';
+  document.getElementById('heroRating').textContent = s.rating || 'PG-13';
+  document.getElementById('heroGenre').textContent = s.genre || 'K-Drama';
+  document.getElementById('heroViews').textContent = fmtNum(s.view_count);
+  document.getElementById('heroLikes').textContent = fmtNum(s.like_count);
+  document.getElementById('heroDesc').textContent =
+    s.description || 'Watch latest dramas in HD quality';
+
+  document.getElementById('heroPlayBtn').href =
+    `series.html?id=${s.id}`;
 }
 
-// ─── Render Cards ───
+// ─── CARDS ───
 function renderCards(list) {
   const grid  = document.getElementById('seriesGrid');
   const empty = document.getElementById('emptyState');
+
   grid.innerHTML = '';
 
   if (!list.length) {
     empty.classList.remove('hidden');
     return;
   }
+
   empty.classList.add('hidden');
 
   list.forEach(s => {
-    const newBadge = isNew(s.created_at) ? `<span class="badge-new">NEW</span>` : '';
     const card = document.createElement('a');
     card.href = `series.html?id=${s.id}`;
     card.className = 'card';
+
     card.innerHTML = `
-      <img src="${s.thumbnail || 'https://via.placeholder.com/300x450/1a1a2e/fff?text=K-TV'}"
-           alt="${s.title}" loading="lazy"
-           onerror="this.src='https://via.placeholder.com/300x450/1a1a2e/fff?text=K-TV'">
+      <img src="${s.thumbnail || 'https://via.placeholder.com/300x450'}"
+           onerror="this.src='https://via.placeholder.com/300x450'">
+
       <span class="badge-rating">${s.rating || 'PG-13'}</span>
       <span class="badge-quality">${s.quality || 'HD'}</span>
-      ${newBadge}
+      ${isNew(s.created_at) ? '<span class="badge-new">NEW</span>' : ''}
+
       <div class="card-overlay">
-        <div class="card-title">${s.title}</div>
+        <div class="card-title">${s.title || 'Untitled'}</div>
         <div class="card-meta">
-          <span><i class="fa-solid fa-film"></i> ${s.episode_count || 0} eps</span>
-          <span><i class="fa-solid fa-earth-asia"></i> ${s.language || 'Korean'}</span>
+          <span>${s.episode_count || 0} eps</span>
+          <span>${s.language || 'Korean'}</span>
         </div>
       </div>
+
       <div class="card-stats">
-        <span class="stat-item"><i class="fa-solid fa-eye"></i> ${fmtNum(s.view_count)}</span>
-        <span class="stat-item"><i class="fa-solid fa-heart"></i> ${fmtNum(s.like_count)}</span>
-        <span class="stat-item"><i class="fa-solid fa-comment"></i> ${fmtNum(s.comment_count)}</span>
+        <span><i class="fa fa-eye"></i> ${fmtNum(s.view_count)}</span>
+        <span><i class="fa fa-heart"></i> ${fmtNum(s.like_count)}</span>
+        <span><i class="fa fa-comment"></i> ${fmtNum(s.comment_count)}</span>
       </div>
     `;
+
     grid.appendChild(card);
   });
 }
 
-// ─── Filter logic ───
+// ─── FILTER ───
 function applyFilter() {
   let list = [...allSeries];
-  if (activeGenre !== 'all') list = list.filter(s => s.genre === activeGenre);
-  if (searchTerm) list = list.filter(s => s.title.toLowerCase().includes(searchTerm));
-  const label = activeGenre === 'all' ? 'All Series' : activeGenre;
-  document.getElementById('sectionLabel').textContent = searchTerm
-    ? `Search: "${searchTerm}"`
-    : label;
+
+  if (activeGenre !== 'all') {
+    list = list.filter(s => s.genre === activeGenre);
+  }
+
+  if (searchTerm) {
+    list = list.filter(s =>
+      s.title.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  document.getElementById('sectionLabel').textContent =
+    searchTerm ? `Search: "${searchTerm}"` :
+    (activeGenre === 'all' ? 'All Series' : activeGenre);
+
   renderCards(list);
 }
 
-// ─── Genre tabs ───
+// ─── EVENTS ───
 document.getElementById('genreTabs').addEventListener('click', e => {
   const tab = e.target.closest('.genre-tab');
   if (!tab) return;
-  document.querySelectorAll('.genre-tab').forEach(t => t.classList.remove('active'));
+
+  document.querySelectorAll('.genre-tab')
+    .forEach(t => t.classList.remove('active'));
+
   tab.classList.add('active');
   activeGenre = tab.dataset.genre;
+
   applyFilter();
 });
 
-// ─── Search ───
 document.getElementById('searchInput').addEventListener('input', e => {
   searchTerm = e.target.value.toLowerCase().trim();
   applyFilter();
 });
 
-// ─── Load Data ───
+// ─── LOAD DATA ───
 async function loadData() {
   try {
-    // ✅ USE VIEW (IMPORTANT)
     let { data, error } = await supabase
       .from('series_stats')
       .select('*')
-      .order('id', { ascending: false });
+      .order('created_at', { ascending: false });
 
-    // ❌ अगर view नहीं बना है तो fallback
-    if (error || !data) {
-      console.warn("Using fallback (series table)");
+    // fallback if view not exists
+    if (error) {
+      console.warn("Fallback to series table");
 
-      let res = await supabase
+      const res = await supabase
         .from('series')
         .select('*')
-        .order('id', { ascending: false });
+        .order('created_at', { ascending: false });
 
       data = (res.data || []).map(s => ({
         ...s,
@@ -568,46 +588,37 @@ async function loadData() {
 
     allSeries = data || [];
 
-    // ❌ अगर empty है तो error दिखाओ
     if (!allSeries.length) {
-      document.getElementById('seriesGrid').innerHTML =
-        `<p class="text-yellow-400 col-span-full text-center py-8">
-          ⚠️ No data found in database
-        </p>`;
+      showToast("No data found ⚠️");
       return;
     }
 
-    // ✅ Hero safe fix
-    const hero = allSeries[0]; // first item only
-    renderHero(hero);
+    // 🔥 SMART HERO (most viewed)
+    let hero = allSeries.reduce((best, s) => {
+      return (!best || (s.view_count > best.view_count)) ? s : best;
+    }, null);
 
+    renderHero(hero);
     applyFilter();
 
-  } catch(e) {
-    console.error(e);
-    document.getElementById('seriesGrid').innerHTML =
-      `<p class="text-red-400 col-span-full text-center py-8">
-        ❌ Error loading data
-      </p>`;
+  } catch (err) {
+    console.error(err);
+    showToast("Database error ❌");
   }
 }
 
-// ─── Fade-in on scroll ───
-const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-}, { threshold: 0.1 });
-document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
-
-// Hero auto-rotate every 7s
-let heroIdx = 0;
-function rotateHero() {
+// ─── HERO ROTATION ───
+let heroIndex = 0;
+setInterval(() => {
   if (!allSeries.length) return;
-  heroIdx = (heroIdx + 1) % Math.min(allSeries.length, 6);
-  renderHero(allSeries[heroIdx]);
-}
-setInterval(rotateHero, 7000);
 
+  heroIndex = (heroIndex + 1) % allSeries.length;
+  renderHero(allSeries[heroIndex]);
+
+}, 6000);
+
+// ─── INIT ───
 loadData();
-</script>
+    </script>
 </body>
 </html>
