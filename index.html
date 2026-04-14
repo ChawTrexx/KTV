@@ -542,31 +542,52 @@ document.getElementById('searchInput').addEventListener('input', e => {
 // ─── Load Data ───
 async function loadData() {
   try {
-    // Try series_stats view first (has counts)
+    // ✅ USE VIEW (IMPORTANT)
     let { data, error } = await supabase
-  .from('series')
-  .select('*')
-  .order('id', { ascending: false });
+      .from('series_stats')
+      .select('*')
+      .order('id', { ascending: false });
 
-    if (error) {
-      // Fallback: plain series table
-      const res = await supabase.from('series').select('*').order('id', { ascending: false });
-      data = (res.data || []).map(s => ({ ...s, view_count: 0, like_count: 0, comment_count: 0, episode_count: 0 }));
+    // ❌ अगर view नहीं बना है तो fallback
+    if (error || !data) {
+      console.warn("Using fallback (series table)");
+
+      let res = await supabase
+        .from('series')
+        .select('*')
+        .order('id', { ascending: false });
+
+      data = (res.data || []).map(s => ({
+        ...s,
+        view_count: 0,
+        like_count: 0,
+        comment_count: 0,
+        episode_count: 0
+      }));
     }
 
     allSeries = data || [];
 
-    // Hero: pick the most viewed or first
-    const hero = allSeries.reduce((best, s) => (!best || (s.view_count > best.view_count) ? s : best), null);
+    // ❌ अगर empty है तो error दिखाओ
+    if (!allSeries.length) {
+      document.getElementById('seriesGrid').innerHTML =
+        `<p class="text-yellow-400 col-span-full text-center py-8">
+          ⚠️ No data found in database
+        </p>`;
+      return;
+    }
+
+    // ✅ Hero safe fix
+    const hero = allSeries[0]; // first item only
     renderHero(hero);
+
     applyFilter();
 
   } catch(e) {
     console.error(e);
     document.getElementById('seriesGrid').innerHTML =
       `<p class="text-red-400 col-span-full text-center py-8">
-        <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-        Could not load series. Check Supabase config.
+        ❌ Error loading data
       </p>`;
   }
 }
