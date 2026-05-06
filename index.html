@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Voice Call Pro</title>
+
+<style>
+body{margin:0;font-family:sans-serif;background:#0a0f1e;color:#fff;text-align:center}
+
+/* UI */
+#online{position:fixed;top:10px;right:10px;background:#111;padding:8px 12px;border-radius:20px}
+button{padding:10px 20px;margin:8px;border:none;border-radius:10px;font-size:16px}
+
+/* CALL UI */
+#callUI{
+  position:fixed;inset:0;
+  background:#000;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+
+#controls{position:absolute;bottom:40px;display:flex;gap:20px}
+#controls button{width:65px;height:65px;border-radius:50%}
+
+#end{background:red;color:#fff}
+#mute{background:#333;color:#fff}
+
+/* INCOMING */
+#incoming{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.9);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎧 Voice Call</h2>
+<button id="callBtn">📞 Start Call</button>
+<div id="online">0 Online</div>
+
+<!-- CALL SCREEN -->
+<div id="callUI">
+  <h2 id="status">Calling...</h2>
+
+  <div id="controls">
+    <button id="mute">🔇</button>
+    <button id="end">❌</button>
+  </div>
+</div>
+
+<!-- INCOMING -->
+<div id="incoming">
+  <h2>📞 Incoming Call</h2>
+  <button id="accept">Accept</button>
+  <button id="reject">Reject</button>
+</div>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import {
+  getDatabase, ref, set, push, onValue, remove, onDisconnect
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+/* 🔥 FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+  databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* USER */
+const uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2);
+localStorage.setItem("uid", uid);
+
+/* ONLINE */
+const presRef = ref(db,"online/"+uid);
+set(presRef,true);
+onDisconnect(presRef).remove();
+
+onValue(ref(db,"online"), snap=>{
+  online.innerText = Object.keys(snap.val()||{}).length + " Online";
+});
+
+/* VARIABLES */
+let pc, localStream, callId=null;
+
+/* START CALL */
+callBtn.onclick = async ()=>{
+  callId = Date.now().toString();
+
+  callUI.style.display="flex";
+  status.innerText="Calling...";
+
+  localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+
+  pc = new RTCPeerConnection({
+    iceServers:[{urls:'stun:stun.l.google.com:19302'}]
+  });
+
+  pc.ontrack = e=>{
+    remoteAudio.srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = e=>{
+    if(e.candidate){
+      push(ref(db,"calls/"+callId+"/ice"), e.candidate.toJSON());
+    }
+  };
+
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  await set(ref(db,"calls/"+callId),{
+    offer,
+    from: uid,
+    status:"calling"
+  });
+};
+
+/* LISTEN CALLS */
+onValue(ref(db,"calls"), async snap=>{
+  const calls = snap.val();
+  if(!calls) return;
+
+  Object.entries(calls).forEach(async ([id,data])=>{
+
+    // INCOMING
+    if(data.from !== uid && data.status==="calling"){
+      incoming.style.display="flex";
+
+      accept.onclick = async ()=>{
+        incoming.style.display="none";
+        callUI.style.display="flex";
+        callId = id;
+
+        localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+
+        pc = new RTCPeerConnection({
+          iceServers:[{urls:'stun:stun.l.google.com:19302'}]
+        });
+
+        pc.ontrack = e=>{
+          remoteAudio.srcObject = e.streams[0];
+        };
+
+        pc.onicecandidate = e=>{
+          if(e.candidate){
+            push(ref(db,"calls/"+id+"/ice"), e.candidate.toJSON());
+          }
+        };
+
+        localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+
+        await pc.setRemoteDescription(data.offer);
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        await set(ref(db,"calls/"+id+"/answer"),answer);
+        await set(ref(db,"calls/"+id+"/status"),"connected");
+
+        status.innerText="Connected";
+      };
+
+      reject.onclick = ()=> remove(ref(db,"calls/"+id));
+    }
+
+    // ANSWER RECEIVED
+    if(data.from === uid && data.answer && pc && !pc.currentRemoteDescription){
+      await pc.setRemoteDescription(data.answer);
+      status.innerText="Connected";
+    }
+
+  });
+});
+
+/* ICE EXCHANGE */
+onValue(ref(db,"calls"), snap=>{
+  const calls = snap.val();
+  if(!calls) return;
+
+  Object.values(calls).forEach(call=>{
+    if(call.ice && pc){
+      Object.values(call.ice).forEach(c=>{
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+      });
+    }
+  });
+});
+
+/* MUTE */
+mute.onclick = ()=>{
+  const t = localStream.getAudioTracks()[0];
+  t.enabled = !t.enabled;
+};
+
+/* END CALL */
+end.onclick = async ()=>{
+  if(callId){
+    await remove(ref(db,"calls/"+callId));
+  }
+  if(pc) pc.close();
+  callUI.style.display="none";
+};
+</script>
+
+</body>
+</html>
