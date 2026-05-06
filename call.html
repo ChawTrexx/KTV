@@ -19,14 +19,18 @@
 </style>
 </head>
 <body>
+
 <h2>🎙️ Firebase Auto Voice Call</h2>
+
 <button id="callBtn">📞 Start Call</button>
+
 <div id="callControls">
   <button id="muteBtn">🔇 Mute</button>
   <button id="speakerBtn">🎧 Earpiece</button>
   <button id="hangupBtn">❌ End Call</button>
   <div id="timer">00:00</div>
 </div>
+
 <div id="onlineCount">💫 0 Online</div>
 
 <audio id="remoteAudio" autoplay playsinline></audio>
@@ -41,20 +45,28 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+
+// ✅ UPDATED FIREBASE
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
-  authDomain: "wechat-eee4d.firebaseapp.com",
-  databaseURL: "https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "wechat-eee4d",
-  storageBucket: "wechat-eee4d.firebasestorage.app",
-  messagingSenderId: "156838661275",
-  appId: "1:156838661275:web:3d0cf4f3b402391801ca3e"
+  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+  authDomain: "wechat-34e85.firebaseapp.com",
+  databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-34e85",
+  storageBucket: "wechat-34e85.firebasestorage.app",
+  messagingSenderId: "935799721802",
+  appId: "1:935799721802:web:a151f180fc96c15ef9bbb3",
+  measurementId: "G-11S5VDLB6L"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const analytics = getAnalytics(app);
+
+// ------------------ SAME CODE BELOW ------------------
 
 const callBtn=document.getElementById('callBtn');
 const hangupBtn=document.getElementById('hangupBtn');
@@ -89,7 +101,7 @@ function startTimer(){
     const m=String(Math.floor(seconds/60)).padStart(2,'0');
     const s=String(seconds%60).padStart(2,'0');
     timerDisplay.textContent=`${m}:${s}`;
-    if(seconds>=10800) endCall(); // auto end 3h
+    if(seconds>=10800) endCall();
   },1000);
 }
 
@@ -146,14 +158,12 @@ onValue(ref(db,'activeCall'),async snap=>{
   }
 });
 
-// ---- Mute ----
 muteBtn.onclick=()=>{
   isMuted=!isMuted;
   localStream.getTracks().forEach(t=>t.enabled=!isMuted);
   muteBtn.textContent=isMuted?"🔈 Unmute":"🔇 Mute";
 };
 
-// ---- Speaker / Earpiece ----
 speakerBtn.onclick=async()=>{
   useSpeaker=!useSpeaker;
   try {
@@ -175,7 +185,6 @@ speakerBtn.onclick=async()=>{
   }
 };
 
-// ---- End Call ----
 async function endCall(){
   clearInterval(timerInterval);
   if(pc) pc.close();
@@ -187,7 +196,6 @@ async function endCall(){
 }
 hangupBtn.onclick=endCall;
 
-// ---- ICE exchange ----
 onValue(ref(db,'ice'),snap=>{
   const data=snap.val();
   if(!data) return;
@@ -200,5 +208,6 @@ onValue(ref(db,'ice'),snap=>{
   });
 });
 </script>
+
 </body>
 </html>
