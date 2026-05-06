@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>🔥 Auto Voice Call</title>
+<title>🔥 Fixed Call</title>
 <style>
 body{background:#0a0f1e;color:#fff;text-align:center;font-family:sans-serif}
 button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3b82f6;color:#fff}
@@ -11,7 +11,7 @@ button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3
 
 <body>
 
-<h2>📞 Auto Calling System</h2>
+<h2>📞 Auto Call</h2>
 
 <button id="callBtn">📞 Call</button>
 
@@ -21,11 +21,14 @@ button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3
   <button id="reject">❌ Reject</button>
 </div>
 
+<br>
+<button id="endBtn">❌ End Call</button>
+
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove, get, child } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, push, remove, get } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
 const app = initializeApp({
  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
@@ -33,108 +36,121 @@ const app = initializeApp({
 });
 const db = getDatabase(app);
 
-const callBtn = document.getElementById("callBtn");
-const incomingDiv = document.getElementById("incoming");
-const acceptBtn = document.getElementById("accept");
-const rejectBtn = document.getElementById("reject");
-const remoteAudio = document.getElementById("remoteAudio");
-
 let pc, localStream;
-let roomId = null;
-let uid = Math.random().toString(36).slice(2);
-let isBusy = false;
+let roomId=null;
+let uid=Math.random().toString(36).slice(2);
+let isBusy=false;
 
-const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const remoteAudio=document.getElementById("remoteAudio");
+const incoming=document.getElementById("incoming");
 
-// 🔧 Create Peer
+// 🔧 CREATE PC
 async function createPC(){
-  pc = new RTCPeerConnection(servers);
+  pc=new RTCPeerConnection({
+    iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+  });
 
-  localStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 
-  localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
+  pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
 
-  pc.ontrack = e=>{
-    remoteAudio.srcObject = e.streams[0];
-  };
-
-  pc.onicecandidate = e=>{
+  pc.onicecandidate=e=>{
     if(e.candidate){
-      push(ref(db, `calls/${roomId}/ice/${uid}`), e.candidate.toJSON());
+      push(ref(db,`calls/${roomId}/ice/${uid}`),e.candidate.toJSON());
     }
   };
 }
 
-// 📞 Start Call
-callBtn.onclick = async ()=>{
+// 🔄 RESET FUNCTION (IMPORTANT)
+async function resetCall(){
+  isBusy=false;
+
+  if(pc) pc.close();
+  if(localStream){
+    localStream.getTracks().forEach(t=>t.stop());
+  }
+
+  if(roomId){
+    await remove(ref(db,`calls/${roomId}`));
+  }
+
+  roomId=null;
+  incoming.style.display="none";
+}
+
+// 📞 CALL
+document.getElementById("callBtn").onclick=async()=>{
   if(isBusy) return alert("Already in call");
 
-  roomId = "room_" + Date.now();
-  isBusy = true;
+  roomId="room_"+Date.now();
+  isBusy=true;
 
   await createPC();
 
-  const offer = await pc.createOffer();
+  const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db, `calls/${roomId}`), {
+  await set(ref(db,`calls/${roomId}`),{
     offer,
-    from: uid,
-    status: "calling"
+    from:uid,
+    status:"calling"
   });
 
   listenAnswer();
   listenICE();
 };
 
-// 👂 Listen for incoming (FIXED: no spam)
-onValue(ref(db, "calls"), snap=>{
-  const calls = snap.val();
+// 👂 INCOMING LISTENER
+onValue(ref(db,"calls"),snap=>{
+  const calls=snap.val();
   if(!calls || isBusy) return;
 
   for(const id in calls){
-    const call = calls[id];
-
-    if(call.from !== uid && call.status === "calling"){
-      roomId = id;
-      isBusy = true;
-      incomingDiv.style.display = "block";
+    const c=calls[id];
+    if(c.from!==uid && c.status==="calling"){
+      roomId=id;
+      isBusy=true;
+      incoming.style.display="block";
       break;
     }
   }
 });
 
-// ✅ Accept
-acceptBtn.onclick = async ()=>{
-  incomingDiv.style.display = "none";
+// ✅ ACCEPT
+document.getElementById("accept").onclick=async()=>{
+  incoming.style.display="none";
 
   await createPC();
 
-  const snap = await get(ref(db, `calls/${roomId}`));
-  const data = snap.val();
+  const snap=await get(ref(db,`calls/${roomId}`));
+  const data=snap.val();
 
   await pc.setRemoteDescription(data.offer);
 
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
+  const ans=await pc.createAnswer();
+  await pc.setLocalDescription(ans);
 
-  await set(ref(db, `calls/${roomId}/answer`), answer);
-  await set(ref(db, `calls/${roomId}/status`), "connected");
+  await set(ref(db,`calls/${roomId}/answer`),ans);
+  await set(ref(db,`calls/${roomId}/status`),"connected");
 
   listenICE();
 };
 
-// ❌ Reject
-rejectBtn.onclick = async ()=>{
-  incomingDiv.style.display = "none";
-  await remove(ref(db, `calls/${roomId}`));
-  isBusy = false;
+// ❌ REJECT
+document.getElementById("reject").onclick=async()=>{
+  await resetCall();
 };
 
-// 📥 Answer listener
+// ❌ END CALL BUTTON
+document.getElementById("endBtn").onclick=async()=>{
+  await resetCall();
+};
+
+// 📥 ANSWER
 function listenAnswer(){
-  onValue(ref(db, `calls/${roomId}/answer`), async snap=>{
-    const ans = snap.val();
+  onValue(ref(db,`calls/${roomId}/answer`),async snap=>{
+    const ans=snap.val();
     if(ans && !pc.currentRemoteDescription){
       await pc.setRemoteDescription(ans);
     }
@@ -143,12 +159,12 @@ function listenAnswer(){
 
 // ❄️ ICE
 function listenICE(){
-  onValue(ref(db, `calls/${roomId}/ice`), snap=>{
-    const data = snap.val();
+  onValue(ref(db,`calls/${roomId}/ice`),snap=>{
+    const data=snap.val();
     if(!data || !pc) return;
 
-    Object.entries(data).forEach(([id, list])=>{
-      if(id !== uid){
+    Object.entries(data).forEach(([id,list])=>{
+      if(id!==uid){
         Object.values(list).forEach(c=>{
           pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
         });
@@ -158,6 +174,5 @@ function listenICE(){
 }
 
 </script>
-
 </body>
 </html>
