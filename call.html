@@ -82,7 +82,22 @@ const callControls=document.getElementById('callControls');
 const timerDisplay=document.getElementById('timer');
 
 let pc,localStream,isMuted=false,useSpeaker=false,timerInterval,seconds=0;
-const servers={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+const servers = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    }
+  ]
+};
 const uid=Math.random().toString(36).slice(2);
 
 const presenceRef=ref(db,'presence/'+uid);
