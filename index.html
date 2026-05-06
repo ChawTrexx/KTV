@@ -1,172 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Call Pro - Working v2</title>
-    <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #0a0f1e; color: #fff; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        #online { position: fixed; top: 20px; right: 20px; background: #1db954; padding: 10px 20px; border-radius: 30px; font-weight: bold; }
-        .btn { padding: 15px 40px; border: none; border-radius: 50px; font-size: 1.1rem; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        #callBtn { background: #1db954; color: white; }
-        
-        /* Modals */
-        .overlay { position: fixed; inset: 0; background: rgba(10, 15, 30, 0.98); display: none; justify-content: center; align-items: center; flex-direction: column; z-index: 100; }
-        #end { background: #ff3b30; color: white; width: 70px; height: 70px; border-radius: 50%; font-size: 30px; border: none; cursor: pointer; margin-top: 50px;}
-        
-        .incoming-box { background: #1a2235; padding: 40px; border-radius: 20px; border: 1px solid #333; }
-        .action-btns { display: flex; gap: 20px; margin-top: 20px; }
-        #accept { background: #34c759; color: white; }
-        #reject { background: #ff3b30; color: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2 User Voice Call</title>
+
+<style>
+body{
+    margin:0;
+    background:#0a0f1e;
+    color:#fff;
+    font-family:sans-serif;
+    text-align:center;
+}
+#box{
+    margin-top:50px;
+}
+input{
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    width:200px;
+}
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+    margin:10px;
+}
+#call{background:#1db954;color:#fff;}
+#end{background:red;color:#fff;}
+.overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background:#000;
+}
+</style>
 </head>
+
 <body>
 
-<div id="online">Connecting...</div>
-<h2>🎧 Voice Call Pro</h2>
-<p>User ID: <strong id="myId">...</strong></p>
-<button id="callBtn" class="btn">📞 Call Someone Online</button>
+<div id="box">
+    <h2>Enter Your ID</h2>
+    <input id="name" placeholder="Enter Name">
+    <br>
+    <button onclick="start()">Start</button>
+</div>
+
+<h3 id="myId"></h3>
+<button id="call" onclick="callUser()" style="display:none;">📞 Call</button>
 
 <div id="callUI" class="overlay">
     <h2 id="status">Calling...</h2>
-    <button id="end">❌</button>
-</div>
-
-<div id="incoming" class="overlay">
-    <div class="incoming-box">
-        <h3>📞 Incoming Voice Call</h3>
-        <div class="action-btns">
-            <button id="accept" class="btn">Accept</button>
-            <button id="reject" class="btn">Reject</button>
-        </div>
-    </div>
+    <button id="end" onclick="endCall()">End</button>
 </div>
 
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, remove, onDisconnect, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
     authDomain: "wechat-34e85.firebaseapp.com",
     databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "wechat-34e85",
-    storageBucket: "wechat-34e85.firebasestorage.app",
-    messagingSenderId: "935799721802",
-    appId: "1:935799721802:web:a151f180fc96c15ef9bbb3"
+    projectId: "wechat-34e85"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const uid = "User_" + Math.random().toString(36).slice(2, 6);
-document.getElementById('myId').innerText = uid;
 
-let pc, localStream;
+let uid, pc, localStream;
+
 const iceServers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-const callRef = ref(db, "current_call");
+const callRef = ref(db, "call");
 
-// 1. Online Status
-set(ref(db, `online/${uid}`), true);
-onDisconnect(ref(db, `online/${uid}`)).remove();
-onValue(ref(db, "online"), s => {
-    document.getElementById('online').innerText = `● ${s.val() ? Object.keys(s.val()).length : 0} Online`;
-});
+// 🔹 Start with custom ID
+window.start = () => {
+    const name = document.getElementById("name").value.trim();
+    if(!name) return alert("Enter name");
 
-// 2. Setup WebRTC
-async function setupMedia(isCaller) {
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        pc = new RTCPeerConnection(iceServers);
-        
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    uid = name;
 
-        pc.ontrack = e => {
-            document.getElementById('remoteAudio').srcObject = e.streams[0];
-        };
+    localStorage.setItem("uid", uid);
 
-        pc.onicecandidate = e => {
-            if (e.candidate) {
-                const icePath = isCaller ? "ice_caller" : "ice_receiver";
-                push(ref(db, `current_call/${icePath}`), e.candidate.toJSON());
-            }
-        };
+    document.getElementById("box").style.display="none";
+    document.getElementById("myId").innerText = "Your ID: " + uid;
+    document.getElementById("call").style.display="inline-block";
 
-        // Listen for ICE candidates from the OTHER person
-        const otherIcePath = isCaller ? "ice_receiver" : "ice_caller";
-        onChildAdded(ref(db, `current_call/${otherIcePath}`), snap => {
-            if (snap.val()) pc.addIceCandidate(new RTCIceCandidate(snap.val())).catch(e => {});
-        });
+    listenCall();
+};
 
-    } catch (err) {
-        alert("Microphone access denied or not found!");
+// 🔹 Auto load saved ID
+window.onload = () => {
+    const saved = localStorage.getItem("uid");
+    if(saved){
+        document.getElementById("name").value = saved;
+        start();
     }
+};
+
+// 🔹 Setup media
+async function setup(isCaller){
+    localStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    pc = new RTCPeerConnection(iceServers);
+
+    localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+    pc.ontrack = e => {
+        document.getElementById("remoteAudio").srcObject = e.streams[0];
+    };
+
+    pc.onicecandidate = e => {
+        if(e.candidate){
+            set(ref(db,"call/ice"), e.candidate.toJSON());
+        }
+    };
+
+    onValue(ref(db,"call/ice"), snap=>{
+        if(snap.val()) pc.addIceCandidate(new RTCIceCandidate(snap.val()));
+    });
 }
 
-// 3. Caller Logic
-document.getElementById('callBtn').onclick = async () => {
-    await remove(callRef); // Clear any old stuck calls
-    document.getElementById('callUI').style.display = "flex";
-    
-    await setupMedia(true);
-    
+// 🔹 Call button
+window.callUser = async () => {
+    document.getElementById("callUI").style.display="flex";
+
+    await setup(true);
+
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    await set(callRef, {
-        offer: { sdp: offer.sdp, type: offer.type },
-        from: uid,
-        status: "ringing"
+    await set(callRef,{
+        offer,
+        from: uid
     });
 
-    onValue(ref(db, "current_call/answer"), async snap => {
-        const answer = snap.val();
-        if (answer && !pc.currentRemoteDescription) {
-            await pc.setRemoteDescription(new RTCSessionDescription(answer));
-            document.getElementById('status').innerText = "Connected 🎙️";
+    onValue(ref(db,"call/answer"), async snap=>{
+        if(snap.val() && !pc.currentRemoteDescription){
+            await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+            document.getElementById("status").innerText="Connected";
         }
     });
 };
 
-// 4. Receiver Logic (Listening for calls)
-onValue(callRef, async snap => {
-    const data = snap.val();
-    if (data && data.from !== uid && data.status === "ringing") {
-        document.getElementById('incoming').style.display = "flex";
+// 🔹 Listen incoming
+function listenCall(){
+    onValue(callRef, async snap=>{
+        const data = snap.val();
+        if(!data) return;
 
-        document.getElementById('accept').onclick = async () => {
-            document.getElementById('incoming').style.display = "none";
-            document.getElementById('callUI').style.display = "flex";
-            document.getElementById('status').innerText = "Connecting...";
+        if(data.from !== uid && data.offer){
+            if(confirm("Incoming call from " + data.from)){
+                document.getElementById("callUI").style.display="flex";
 
-            await setupMedia(false);
-            await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-            
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            
-            await set(ref(db, "current_call/answer"), { sdp: answer.sdp, type: answer.type });
-            await set(ref(db, "current_call/status"), "connected");
-            document.getElementById('status').innerText = "Connected 🎙️";
-        };
+                await setup(false);
 
-        document.getElementById('reject').onclick = () => {
-            remove(callRef);
-        };
-    } else if (!data) {
-        // If caller cancels or call ends
-        document.getElementById('callUI').style.display = "none";
-        document.getElementById('incoming').style.display = "none";
-        if (pc) pc.close();
-    }
-});
+                await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
 
-// 5. End Call
-document.getElementById('end').onclick = () => {
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                await set(ref(db,"call/answer"), answer);
+
+                document.getElementById("status").innerText="Connected";
+            }
+        }
+    });
+}
+
+// 🔹 End call
+window.endCall = () => {
     remove(callRef);
     location.reload();
 };
+
 </script>
 </body>
 </html>
