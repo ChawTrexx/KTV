@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>🔥 Auto Call System</title>
+<title>🔥 Auto Voice Call</title>
 <style>
 body{background:#0a0f1e;color:#fff;text-align:center;font-family:sans-serif}
 button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3b82f6;color:#fff}
@@ -11,21 +11,21 @@ button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3
 
 <body>
 
-<h2>📞 Auto Calling</h2>
+<h2>📞 Auto Calling System</h2>
 
-<button onclick="startCall()">📞 Call Random User</button>
+<button id="callBtn">📞 Call</button>
 
 <div id="incoming">
   <h3>📞 Incoming Call</h3>
-  <button onclick="acceptCall()">✅ Accept</button>
-  <button onclick="rejectCall()">❌ Reject</button>
+  <button id="accept">✅ Accept</button>
+  <button id="reject">❌ Reject</button>
 </div>
 
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, push, remove, get, child } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
 const app = initializeApp({
  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
@@ -33,14 +33,20 @@ const app = initializeApp({
 });
 const db = getDatabase(app);
 
-let pc, localStream, roomId;
-const uid = Math.random().toString(36).slice(2);
+const callBtn = document.getElementById("callBtn");
+const incomingDiv = document.getElementById("incoming");
+const acceptBtn = document.getElementById("accept");
+const rejectBtn = document.getElementById("reject");
+const remoteAudio = document.getElementById("remoteAudio");
 
-const servers = {
- iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-};
+let pc, localStream;
+let roomId = null;
+let uid = Math.random().toString(36).slice(2);
+let isBusy = false;
 
-// 🔧 CREATE PC
+const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+// 🔧 Create Peer
 async function createPC(){
   pc = new RTCPeerConnection(servers);
 
@@ -49,7 +55,7 @@ async function createPC(){
   localStream.getTracks().forEach(t=>pc.addTrack(t, localStream));
 
   pc.ontrack = e=>{
-    document.getElementById("remoteAudio").srcObject = e.streams[0];
+    remoteAudio.srcObject = e.streams[0];
   };
 
   pc.onicecandidate = e=>{
@@ -59,9 +65,12 @@ async function createPC(){
   };
 }
 
-// 📞 CALL
-window.startCall = async ()=>{
-  roomId = "room_" + Math.random().toString(36).slice(2);
+// 📞 Start Call
+callBtn.onclick = async ()=>{
+  if(isBusy) return alert("Already in call");
+
+  roomId = "room_" + Date.now();
+  isBusy = true;
 
   await createPC();
 
@@ -78,30 +87,31 @@ window.startCall = async ()=>{
   listenICE();
 };
 
-// 👂 LISTEN INCOMING
+// 👂 Listen for incoming (FIXED: no spam)
 onValue(ref(db, "calls"), snap=>{
-  const data = snap.val();
-  if(!data) return;
+  const calls = snap.val();
+  if(!calls || isBusy) return;
 
-  Object.entries(data).forEach(([id, call])=>{
+  for(const id in calls){
+    const call = calls[id];
+
     if(call.from !== uid && call.status === "calling"){
       roomId = id;
-      document.getElementById("incoming").style.display="block";
+      isBusy = true;
+      incomingDiv.style.display = "block";
+      break;
     }
-  });
+  }
 });
 
-// ✅ ACCEPT
-window.acceptCall = async ()=>{
-  document.getElementById("incoming").style.display="none";
+// ✅ Accept
+acceptBtn.onclick = async ()=>{
+  incomingDiv.style.display = "none";
 
   await createPC();
 
-  const callDataSnap = await new Promise(res=>{
-    onValue(ref(db, `calls/${roomId}`), s=>res(s), {onlyOnce:true});
-  });
-
-  const data = callDataSnap.val();
+  const snap = await get(ref(db, `calls/${roomId}`));
+  const data = snap.val();
 
   await pc.setRemoteDescription(data.offer);
 
@@ -114,13 +124,14 @@ window.acceptCall = async ()=>{
   listenICE();
 };
 
-// ❌ REJECT
-window.rejectCall = async ()=>{
-  document.getElementById("incoming").style.display="none";
+// ❌ Reject
+rejectBtn.onclick = async ()=>{
+  incomingDiv.style.display = "none";
   await remove(ref(db, `calls/${roomId}`));
+  isBusy = false;
 };
 
-// 📥 ANSWER LISTEN
+// 📥 Answer listener
 function listenAnswer(){
   onValue(ref(db, `calls/${roomId}/answer`), async snap=>{
     const ans = snap.val();
@@ -134,7 +145,7 @@ function listenAnswer(){
 function listenICE(){
   onValue(ref(db, `calls/${roomId}/ice`), snap=>{
     const data = snap.val();
-    if(!data) return;
+    if(!data || !pc) return;
 
     Object.entries(data).forEach(([id, list])=>{
       if(id !== uid){
