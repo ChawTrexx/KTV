@@ -3,203 +3,202 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎧 Voice Call</title>
+<title>🔥 Voice Call Pro</title>
+
 <style>
-  body {background:#0a0f1e;color:#e6eef8;font-family:"Poppins",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;margin:0}
-  button{padding:10px 20px;margin:8px;border-radius:10px;border:none;font-size:16px;cursor:pointer;transition:0.3s}
-  button:hover{transform:scale(1.05)}
-  #onlineCount{position:fixed;top:15px;right:15px;padding:8px 14px;border-radius:20px;background:linear-gradient(90deg,#06b6d4,#3b82f6,#9333ea);color:#fff;font-weight:bold;box-shadow:0 0 15px rgba(59,130,246,0.7)}
-  #incomingPopup{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);color:white;justify-content:center;align-items:center;flex-direction:column;z-index:10}
-  #incomingPopup button{margin:10px;font-size:18px;padding:12px 25px}
-  #acceptBtn{background:#10b981;color:#fff}
-  #rejectBtn{background:#ef4444;color:#fff}
-  #callControls{display:none;margin-top:15px}
-  #muteBtn,#speakerBtn,#hangupBtn{background:#3b82f6;color:#fff}
-  #timer{margin-top:10px;font-size:18px;color:#0ff;font-weight:bold}
+body{background:#0a0f1e;color:#fff;font-family:sans-serif;text-align:center;padding:20px}
+input,button{padding:10px;margin:5px;border-radius:8px;border:none}
+button{background:#3b82f6;color:#fff}
+#callControls{display:none;margin-top:10px}
+#incoming{display:none;background:#111;padding:20px;border-radius:10px;margin-top:20px}
 </style>
 </head>
+
 <body>
-<h2>🎙️ Firebase Auto Voice Call</h2>
-<button id="callBtn">📞 Start Call</button>
+
+<h2>🎧 Voice Call (2 User)</h2>
+
+<input id="userId" placeholder="Your ID">
+<input id="roomId" placeholder="Room ID (same for both)">
+<br>
+<button id="start">📞 Call / Join</button>
+
+<div id="incoming">
+  <h3>📞 Incoming Call...</h3>
+  <button id="accept">✅ Accept</button>
+  <button id="reject">❌ Reject</button>
+</div>
+
 <div id="callControls">
-  <button id="muteBtn">🔇 Mute</button>
-  <button id="speakerBtn">🎧 Earpiece</button>
-  <button id="hangupBtn">❌ End Call</button>
+  <button id="mute">🔇 Mute</button>
+  <button id="end">❌ End</button>
   <div id="timer">00:00</div>
 </div>
-<div id="onlineCount">💫 0 Online</div>
 
-<audio id="remoteAudio" autoplay playsinline></audio>
-<audio id="localAudio" autoplay muted playsinline style="display:none;"></audio>
-
-<div id="incomingPopup">
-  <h2>📞 Incoming Call...</h2>
-  <div>
-    <button id="acceptBtn">✅ Receive</button>
-    <button id="rejectBtn">❌ Reject</button>
-  </div>
-</div>
+<audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { getDatabase, ref, set, onValue, push, remove, update } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
-    authDomain: "wechat-34e85.firebaseapp.com",
-    databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "wechat-34e85",
-    storageBucket: "wechat-34e85.firebasestorage.app",
-    messagingSenderId: "935799721802",
-    appId: "1:935799721802:web:a151f180fc96c15ef9bbb3",
-    measurementId: "G-11S5VDLB6L"
-  };
+ apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+ authDomain: "wechat-34e85.firebaseapp.com",
+ databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
+ projectId: "wechat-34e85"
+};
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const callBtn=document.getElementById('callBtn');
-const hangupBtn=document.getElementById('hangupBtn');
-const muteBtn=document.getElementById('muteBtn');
-const speakerBtn=document.getElementById('speakerBtn');
-const onlineCount=document.getElementById('onlineCount');
-const incomingPopup=document.getElementById('incomingPopup');
-const acceptBtn=document.getElementById('acceptBtn');
-const rejectBtn=document.getElementById('rejectBtn');
-const remoteAudio=document.getElementById('remoteAudio');
-const localAudio=document.getElementById('localAudio');
-const callControls=document.getElementById('callControls');
-const timerDisplay=document.getElementById('timer');
+let pc, localStream, uid, room;
+let isCaller = false;
+let timerInt, sec = 0;
 
-let pc,localStream,isMuted=false,useSpeaker=false,timerInterval,seconds=0;
-const servers={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
-const uid=Math.random().toString(36).slice(2);
+const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-const presenceRef=ref(db,'presence/'+uid);
-set(presenceRef,{online:true,time:serverTimestamp()});
-onDisconnect(presenceRef).remove();
-onValue(ref(db,'presence'),s=>{
-  const d=s.val()||{};
-  onlineCount.textContent=`💫 ${Object.keys(d).length} Online`;
-});
+const incomingDiv = document.getElementById("incoming");
+const acceptBtn = document.getElementById("accept");
+const rejectBtn = document.getElementById("reject");
 
-function startTimer(){
-  clearInterval(timerInterval);
-  seconds=0;
-  timerInterval=setInterval(()=>{
-    seconds++;
-    const m=String(Math.floor(seconds/60)).padStart(2,'0');
-    const s=String(seconds%60).padStart(2,'0');
-    timerDisplay.textContent=`${m}:${s}`;
-    if(seconds>=10800) endCall(); // auto end 3h
-  },1000);
-}
+// START CALL
+document.getElementById("start").onclick = async () => {
+  uid = document.getElementById("userId").value;
+  room = document.getElementById("roomId").value;
 
-async function initPeerConnection(){
-  pc=new RTCPeerConnection(servers);
-  pc.onicecandidate=e=>{
-    if(e.candidate){
-      set(ref(db,'ice/'+uid+'/'+Date.now()),e.candidate.toJSON());
+  if (!uid || !room) return alert("Enter ID & Room");
+
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  pc = new RTCPeerConnection(servers);
+
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+  pc.ontrack = e => {
+    document.getElementById("remoteAudio").srcObject = e.streams[0];
+  };
+
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      push(ref(db, `calls/${room}/ice/${uid}`), e.candidate.toJSON());
     }
   };
-  pc.ontrack=e=>{
-    remoteAudio.srcObject=e.streams[0];
-  };
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-}
 
-async function startCallProcess(){
-  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  localAudio.srcObject=localStream;
-  await initPeerConnection();
-  const offer=await pc.createOffer();
+  // Create offer (caller)
+  const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  await set(ref(db,'activeCall'),{offer,from:uid});
-  callBtn.disabled=true;
-  callControls.style.display='block';
-}
 
-callBtn.onclick=startCallProcess;
+  await set(ref(db, `calls/${room}`), {
+    offer,
+    from: uid,
+    status: "calling"
+  });
 
-onValue(ref(db,'activeCall'),async snap=>{
-  const data=snap.val();
-  if(!data) return;
-  if(data.from!==uid && data.offer && !data.answer){
-    incomingPopup.style.display='flex';
-    acceptBtn.onclick=async()=>{
-      incomingPopup.style.display='none';
-      localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-      localAudio.srcObject=localStream;
-      await initPeerConnection();
+  isCaller = true;
+};
+
+// LISTENER
+onValue(ref(db, `calls`), async snap => {
+  const rooms = snap.val();
+  if (!rooms || !room || !uid) return;
+
+  const data = rooms[room];
+  if (!data) return;
+
+  // 📞 Incoming Call
+  if (!isCaller && data.offer && data.status === "calling") {
+    incomingDiv.style.display = "block";
+
+    acceptBtn.onclick = async () => {
+      incomingDiv.style.display = "none";
+
+      if (!pc) {
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        pc = new RTCPeerConnection(servers);
+
+        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+
+        pc.ontrack = e => {
+          document.getElementById("remoteAudio").srcObject = e.streams[0];
+        };
+
+        pc.onicecandidate = e => {
+          if (e.candidate) {
+            push(ref(db, `calls/${room}/ice/${uid}`), e.candidate.toJSON());
+          }
+        };
+      }
+
       await pc.setRemoteDescription(data.offer);
-      const answer=await pc.createAnswer();
+
+      const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-      await set(ref(db,'activeCall/answer'),answer);
-      callControls.style.display='block';
+
+      await update(ref(db, `calls/${room}`), {
+        answer,
+        status: "connected"
+      });
+
       startTimer();
+      document.getElementById("callControls").style.display = "block";
     };
-    rejectBtn.onclick=async()=>{
-      incomingPopup.style.display='none';
-      await remove(ref(db,'activeCall'));
+
+    rejectBtn.onclick = async () => {
+      incomingDiv.style.display = "none";
+      await remove(ref(db, `calls/${room}`));
     };
-  } else if(data.answer && pc && !pc.currentRemoteDescription){
+  }
+
+  // ✅ Caller gets answer
+  if (isCaller && data.answer && !pc.currentRemoteDescription) {
     await pc.setRemoteDescription(data.answer);
     startTimer();
+    document.getElementById("callControls").style.display = "block";
   }
 });
 
-// ---- Mute ----
-muteBtn.onclick=()=>{
-  isMuted=!isMuted;
-  localStream.getTracks().forEach(t=>t.enabled=!isMuted);
-  muteBtn.textContent=isMuted?"🔈 Unmute":"🔇 Mute";
-};
+// ICE
+onValue(ref(db, `calls/${room}/ice`), snap => {
+  const d = snap.val();
+  if (!d || !pc) return;
 
-// ---- Speaker / Earpiece ----
-speakerBtn.onclick=async()=>{
-  useSpeaker=!useSpeaker;
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
-    if (audioOutputs.length > 0 && typeof remoteAudio.setSinkId === 'function') {
-      if (useSpeaker) {
-        await remoteAudio.setSinkId(audioOutputs[audioOutputs.length - 1].deviceId);
-        speakerBtn.textContent = "🔊 Speaker";
-      } else {
-        await remoteAudio.setSinkId(audioOutputs[0].deviceId);
-        speakerBtn.textContent = "🎧 Earpiece";
-      }
-    } else {
-      alert("Speaker toggle not supported on this device/browser.");
-    }
-  } catch (err) {
-    console.warn("Audio output switch failed:", err);
-  }
-};
-
-// ---- End Call ----
-async function endCall(){
-  clearInterval(timerInterval);
-  if(pc) pc.close();
-  await remove(ref(db,'activeCall'));
-  await remove(ref(db,'ice'));
-  callBtn.disabled=false;
-  callControls.style.display='none';
-  alert('Call Ended');
-}
-hangupBtn.onclick=endCall;
-
-// ---- ICE exchange ----
-onValue(ref(db,'ice'),snap=>{
-  const data=snap.val();
-  if(!data) return;
-  Object.entries(data).forEach(([uid2,iceList])=>{
-    if(uid2!==uid && pc){
-      Object.values(iceList).forEach(c=>{
-        pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+  Object.entries(d).forEach(([id, list]) => {
+    if (id !== uid) {
+      Object.values(list).forEach(c => {
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
       });
     }
   });
 });
+
+// TIMER
+function startTimer() {
+  clearInterval(timerInt);
+  sec = 0;
+  timerInt = setInterval(() => {
+    sec++;
+    let m = String(Math.floor(sec / 60)).padStart(2, '0');
+    let s = String(sec % 60).padStart(2, '0');
+    document.getElementById("timer").innerText = `${m}:${s}`;
+  }, 1000);
+}
+
+// MUTE
+document.getElementById("mute").onclick = () => {
+  if (!localStream) return;
+  const track = localStream.getTracks()[0];
+  track.enabled = !track.enabled;
+};
+
+// END
+document.getElementById("end").onclick = async () => {
+  if (pc) pc.close();
+  await remove(ref(db, `calls/${room}`));
+  location.reload();
+};
+
 </script>
+
 </body>
 </html>
