@@ -6,155 +6,65 @@
 <title>WeChat Pro</title>
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{
-  font-family:system-ui;
-  background:linear-gradient(135deg,#0f172a,#020617);
-  color:#fff;
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-}
+body{margin:0;font-family:sans-serif;background:#0f172a;color:#fff}
 
 /* HEADER */
-header{
-  padding:12px;
-  background:rgba(0,0,0,0.5);
-  backdrop-filter:blur(10px);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-#callBtn{
-  background:#22c55e;
-  border:none;
-  padding:8px 14px;
-  border-radius:20px;
-  color:#fff;
-  font-weight:bold;
+header{padding:10px;background:#020617;display:flex;justify-content:space-between}
+#userList button{
+  display:block;margin:5px;padding:8px;border:none;border-radius:8px;
+  background:#22c55e;color:#fff;width:100%;
 }
 
 /* CHAT */
-#messages{
-  flex:1;
-  overflow:auto;
-  padding:10px;
-}
-
-.msg{
-  max-width:75%;
-  padding:10px;
-  margin:6px;
-  border-radius:12px;
-  background:#1e293b;
-}
-
-.me{
-  margin-left:auto;
-  background:#2563eb;
-}
+#messages{height:45vh;overflow:auto;padding:10px}
+.msg{background:#1e293b;padding:8px;border-radius:10px;margin:5px;max-width:70%}
+.me{background:#2563eb;margin-left:auto}
 
 /* INPUT */
-footer{
-  display:flex;
-  padding:10px;
-  background:#020617;
-}
-
-#msgInput{
-  flex:1;
-  padding:12px;
-  border:none;
-  border-radius:25px;
-  background:#1e293b;
-  color:#fff;
-}
-
-#sendBtn{
-  margin-left:10px;
-  border:none;
-  border-radius:50%;
-  padding:12px;
-  background:#3b82f6;
-  color:#fff;
-}
+footer{display:flex;padding:10px;background:#020617}
+#msgInput{flex:1;padding:10px;border:none;border-radius:20px;background:#1e293b;color:#fff}
+#sendBtn{margin-left:10px;padding:10px;border:none;border-radius:50%;background:#3b82f6;color:#fff}
 
 /* CALL SCREEN */
 #callScreen{
-  position:fixed;
-  inset:0;
-  background:#000;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:999;
+  position:fixed;inset:0;background:#000;
+  display:none;justify-content:center;align-items:center;flex-direction:column;
 }
 
-#callName{font-size:22px}
-#callStatus{color:#aaa;margin-top:5px}
-
-.callBtns{
-  position:absolute;
-  bottom:50px;
-  display:flex;
-  gap:20px;
-}
-
-.callBtns button{
-  width:65px;height:65px;
-  border-radius:50%;
-  border:none;
-  font-size:20px;
-}
-
-#endCall{background:#ef4444;color:#fff}
-#mute{background:#374151;color:#fff}
+.callBtns{position:absolute;bottom:50px;display:flex;gap:20px}
+.callBtns button{width:60px;height:60px;border-radius:50%;border:none}
+#endCall{background:red;color:#fff}
+#mute{background:#333;color:#fff}
 
 /* INCOMING */
 #incoming{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.95);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  z-index:1000;
+  position:fixed;inset:0;background:rgba(0,0,0,0.9);
+  display:none;justify-content:center;align-items:center;flex-direction:column;
 }
-
-#incoming button{
-  margin:10px;
-  padding:12px 25px;
-  border:none;
-  border-radius:10px;
-  font-size:16px;
-}
-
-#accept{background:#22c55e;color:#fff}
-#reject{background:#ef4444;color:#fff}
+#incoming button{margin:10px;padding:10px 20px;border:none;border-radius:10px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h3 id="userName">🔥 WeChat</h3>
-  <button id="callBtn">📞 Call</button>
+  <h3 id="myName">🔥 WeChat</h3>
 </header>
 
+<!-- ONLINE USERS -->
+<div id="userList"></div>
+
+<!-- CHAT -->
 <div id="messages"></div>
 
 <footer>
-  <input id="msgInput" placeholder="Type message...">
+  <input id="msgInput" placeholder="Message">
   <button id="sendBtn">➤</button>
 </footer>
 
 <!-- CALL -->
 <div id="callScreen">
-  <div id="callName">Calling...</div>
-  <div id="callStatus">Connecting...</div>
+  <h2 id="callStatus">Calling...</h2>
 
   <div class="callBtns">
     <button id="mute">🔇</button>
@@ -173,116 +83,194 @@ footer{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getDatabase, ref, push, set, onChildAdded, remove, onValue } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import {
+  getDatabase, ref, push, set, onChildAdded,
+  onValue, remove, onDisconnect
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-/* 🔥 YOUR NEW FIREBASE */
+/* 🔥 FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
   authDomain: "wechat-34e85.firebaseapp.com",
   databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "wechat-34e85",
-  storageBucket: "wechat-34e85.firebasestorage.app",
-  messagingSenderId: "935799721802",
-  appId: "1:935799721802:web:a151f180fc96c15ef9bbb3"
+  projectId: "wechat-34e85"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* USER */
-let username = localStorage.getItem("u") || prompt("Enter name");
-localStorage.setItem("u", username);
-userName.innerText = username;
+let username = localStorage.getItem("name") || prompt("Enter Name");
+localStorage.setItem("name", username);
+myName.innerText = username;
+
+const uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2);
+localStorage.setItem("uid", uid);
+
+/* ONLINE PRESENCE */
+const presenceRef = ref(db,"online/"+uid);
+set(presenceRef,{name:username});
+onDisconnect(presenceRef).remove();
+
+/* SHOW USERS */
+onValue(ref(db,"online"), snap=>{
+  const users = snap.val()||{};
+  userList.innerHTML="";
+  Object.entries(users).forEach(([id,data])=>{
+    if(id===uid) return;
+
+    const btn=document.createElement("button");
+    btn.innerText="📞 Call "+data.name;
+    btn.onclick=()=>startCall(id);
+
+    userList.appendChild(btn);
+  });
+});
 
 /* CHAT */
-const chatRef = ref(db,"chat");
+const chatRef=ref(db,"chat");
 
-sendBtn.onclick = ()=>{
+sendBtn.onclick=()=>{
   if(!msgInput.value) return;
   push(chatRef,{user:username,text:msgInput.value});
   msgInput.value="";
 };
 
 onChildAdded(chatRef,s=>{
-  let d=s.val();
-  let div=document.createElement("div");
+  const d=s.val();
+  const div=document.createElement("div");
   div.className="msg "+(d.user===username?"me":"");
   div.innerText=d.user+": "+d.text;
   messages.appendChild(div);
   messages.scrollTop=messages.scrollHeight;
 });
 
-/* CALL */
-let pc,localStream;
-const uid=Math.random().toString(36).slice(2);
-const callRef=ref(db,"call");
+/* CALL SYSTEM */
+let pc,localStream,currentCallId=null;
 
-callBtn.onclick=startCall;
+async function startCall(targetId){
+  const callId=Date.now().toString();
+  currentCallId=callId;
 
-async function startCall(){
   callScreen.style.display="flex";
   callStatus.innerText="Calling...";
 
   localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+
+  pc=new RTCPeerConnection({
+    iceServers:[{urls:'stun:stun.l.google.com:19302'}]
+  });
 
   pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
 
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 
+  pc.onicecandidate=e=>{
+    if(e.candidate){
+      push(ref(db,"calls/"+callId+"/ice"),e.candidate.toJSON());
+    }
+  };
+
   const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  set(callRef,{offer,from:uid});
+  await set(ref(db,"calls/"+callId),{
+    from:uid,
+    to:targetId,
+    offer,
+    status:"calling"
+  });
 }
 
-/* LISTEN */
-onValue(callRef,async snap=>{
-  let data=snap.val();
-  if(!data) return;
+/* INCOMING */
+onValue(ref(db,"calls"), snap=>{
+  const calls=snap.val();
+  if(!calls) return;
 
-  if(data.from!==uid && data.offer && !data.answer){
-    incoming.style.display="flex";
+  Object.entries(calls).forEach(([id,data])=>{
+    if(data.to===uid && data.status==="calling"){
 
-    accept.onclick=async()=>{
-      incoming.style.display="none";
-      callScreen.style.display="flex";
+      incoming.style.display="flex";
 
-      localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-      pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+      accept.onclick=()=>acceptCall(id,data);
+      reject.onclick=()=>remove(ref(db,"calls/"+id));
+    }
+  });
+});
 
-      pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
-      localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+/* ACCEPT */
+async function acceptCall(callId,data){
+  incoming.style.display="none";
+  callScreen.style.display="flex";
+  currentCallId=callId;
 
-      await pc.setRemoteDescription(data.offer);
-      const ans=await pc.createAnswer();
-      await pc.setLocalDescription(ans);
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
 
-      set(ref(db,"call/answer"),ans);
+  pc=new RTCPeerConnection({
+    iceServers:[{urls:'stun:stun.l.google.com:19302'}]
+  });
+
+  pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
+
+  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+
+  pc.onicecandidate=e=>{
+    if(e.candidate){
+      push(ref(db,"calls/"+callId+"/ice"),e.candidate.toJSON());
+    }
+  };
+
+  await pc.setRemoteDescription(data.offer);
+
+  const ans=await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+
+  await set(ref(db,"calls/"+callId+"/answer"),ans);
+  await set(ref(db,"calls/"+callId+"/status"),"connected");
+
+  callStatus.innerText="Connected";
+}
+
+/* ANSWER LISTEN */
+onValue(ref(db,"calls"), async snap=>{
+  const calls=snap.val();
+  if(!calls) return;
+
+  Object.entries(calls).forEach(async ([id,data])=>{
+    if(data.from===uid && data.answer && pc && !pc.currentRemoteDescription){
+      await pc.setRemoteDescription(data.answer);
       callStatus.innerText="Connected";
-    };
+    }
+  });
+});
 
-    reject.onclick=()=>remove(callRef);
-  }
+/* ICE */
+onValue(ref(db,"calls"), snap=>{
+  const calls=snap.val();
+  if(!calls) return;
 
-  if(data.answer && pc && !pc.currentRemoteDescription){
-    await pc.setRemoteDescription(data.answer);
-    callStatus.innerText="Connected";
-  }
+  Object.values(calls).forEach(data=>{
+    if(data.ice && pc){
+      Object.values(data.ice).forEach(c=>{
+        pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+      });
+    }
+  });
 });
 
 /* MUTE */
 mute.onclick=()=>{
-  let track=localStream.getAudioTracks()[0];
+  const track=localStream.getAudioTracks()[0];
   track.enabled=!track.enabled;
-  mute.innerText=track.enabled?"🔇":"🔊";
 };
 
 /* END */
-endCall.onclick=()=>{
-  callScreen.style.display="none";
-  remove(callRef);
+endCall.onclick=async ()=>{
+  if(currentCallId){
+    await remove(ref(db,"calls/"+currentCallId));
+  }
   if(pc) pc.close();
+  callScreen.style.display="none";
 };
 </script>
 
