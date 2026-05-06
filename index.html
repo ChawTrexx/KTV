@@ -6,85 +6,152 @@
 <title>WeChat Pro</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#000;color:#fff}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:system-ui;
+  background:linear-gradient(135deg,#0f172a,#020617);
+  color:#fff;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
 
 /* HEADER */
-header{background:#111;padding:12px;display:flex;justify-content:space-between}
-#callBtn{background:#1e90ff;border:none;padding:8px 12px;border-radius:8px;color:#fff}
+header{
+  padding:12px;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(10px);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+#callBtn{
+  background:#22c55e;
+  border:none;
+  padding:8px 14px;
+  border-radius:20px;
+  color:#fff;
+  font-weight:bold;
+}
 
 /* CHAT */
-#messages{height:65vh;overflow:auto;padding:10px}
-.msg{background:#1a1a1a;padding:8px;border-radius:8px;margin:5px;max-width:75%}
-.me{background:#1e90ff;margin-left:auto}
+#messages{
+  flex:1;
+  overflow:auto;
+  padding:10px;
+}
+
+.msg{
+  max-width:75%;
+  padding:10px;
+  margin:6px;
+  border-radius:12px;
+  background:#1e293b;
+}
+
+.me{
+  margin-left:auto;
+  background:#2563eb;
+}
 
 /* INPUT */
-footer{position:fixed;bottom:0;width:100%;display:flex;background:#111;padding:10px}
-#msgInput{flex:1;padding:10px;border:none;border-radius:20px;background:#222;color:#fff}
-#sendBtn{margin-left:8px;background:#1e90ff;border:none;padding:10px;border-radius:50%}
+footer{
+  display:flex;
+  padding:10px;
+  background:#020617;
+}
 
-/* 📞 CALL SCREEN */
+#msgInput{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:25px;
+  background:#1e293b;
+  color:#fff;
+}
+
+#sendBtn{
+  margin-left:10px;
+  border:none;
+  border-radius:50%;
+  padding:12px;
+  background:#3b82f6;
+  color:#fff;
+}
+
+/* CALL SCREEN */
 #callScreen{
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
+  inset:0;
   background:#000;
   display:none;
-  flex-direction:column;
   justify-content:center;
   align-items:center;
+  flex-direction:column;
   z-index:999;
 }
 
-#callName{font-size:22px;margin-bottom:5px}
-#callStatus{font-size:14px;color:#aaa;margin-bottom:20px}
+#callName{font-size:22px}
+#callStatus{color:#aaa;margin-top:5px}
 
 .callBtns{
   position:absolute;
-  bottom:40px;
+  bottom:50px;
   display:flex;
   gap:20px;
 }
 
 .callBtns button{
-  width:60px;height:60px;
+  width:65px;height:65px;
   border-radius:50%;
   border:none;
-  font-size:18px;
+  font-size:20px;
 }
 
-#endCall{background:red;color:#fff}
-#mute{background:#333;color:#fff}
+#endCall{background:#ef4444;color:#fff}
+#mute{background:#374151;color:#fff}
 
 /* INCOMING */
 #incoming{
   position:fixed;
-  top:0;left:0;
-  width:100%;height:100%;
-  background:rgba(0,0,0,0.9);
+  inset:0;
+  background:rgba(0,0,0,0.95);
   display:none;
   justify-content:center;
   align-items:center;
   flex-direction:column;
   z-index:1000;
 }
+
+#incoming button{
+  margin:10px;
+  padding:12px 25px;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+}
+
+#accept{background:#22c55e;color:#fff}
+#reject{background:#ef4444;color:#fff}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h3>🔥 WeChat</h3>
+  <h3 id="userName">🔥 WeChat</h3>
   <button id="callBtn">📞 Call</button>
 </header>
 
 <div id="messages"></div>
 
 <footer>
-  <input id="msgInput" placeholder="Message">
+  <input id="msgInput" placeholder="Type message...">
   <button id="sendBtn">➤</button>
 </footer>
 
-<!-- 📞 CALL UI -->
+<!-- CALL -->
 <div id="callScreen">
   <div id="callName">Calling...</div>
   <div id="callStatus">Connecting...</div>
@@ -95,50 +162,57 @@ footer{position:fixed;bottom:0;width:100%;display:flex;background:#111;padding:1
   </div>
 </div>
 
-<!-- 📞 INCOMING -->
+<!-- INCOMING -->
 <div id="incoming">
   <h2>📞 Incoming Call</h2>
-  <button id="accept">✅ Accept</button>
-  <button id="reject">❌ Reject</button>
+  <button id="accept">Accept</button>
+  <button id="reject">Reject</button>
 </div>
 
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
-import { getDatabase, ref, push, set, onChildAdded, remove, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getDatabase, ref, push, set, onChildAdded, remove, onValue } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-const config={
- apiKey:"AIzaSyA_IGhhpYGsJDy1M9VPH-NXY561BF31mgg",
- databaseURL:"https://wechat-eee4d-default-rtdb.asia-southeast1.firebasedatabase.app"
+/* 🔥 YOUR NEW FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+  authDomain: "wechat-34e85.firebaseapp.com",
+  databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-34e85",
+  storageBucket: "wechat-34e85.firebasestorage.app",
+  messagingSenderId: "935799721802",
+  appId: "1:935799721802:web:a151f180fc96c15ef9bbb3"
 };
 
-const app=initializeApp(config);
-const db=getDatabase(app);
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-let username=localStorage.getItem("u")||prompt("Name?");
-localStorage.setItem("u",username);
+/* USER */
+let username = localStorage.getItem("u") || prompt("Enter name");
+localStorage.setItem("u", username);
+userName.innerText = username;
 
-const chatRef=ref(db,"chat");
+/* CHAT */
+const chatRef = ref(db,"chat");
 
-// CHAT SEND
-sendBtn.onclick=()=>{
+sendBtn.onclick = ()=>{
   if(!msgInput.value) return;
   push(chatRef,{user:username,text:msgInput.value});
   msgInput.value="";
 };
 
-// SHOW MSG
 onChildAdded(chatRef,s=>{
   let d=s.val();
   let div=document.createElement("div");
   div.className="msg "+(d.user===username?"me":"");
   div.innerText=d.user+": "+d.text;
   messages.appendChild(div);
+  messages.scrollTop=messages.scrollHeight;
 });
 
-// ================== CALL ==================
-
+/* CALL */
 let pc,localStream;
 const uid=Math.random().toString(36).slice(2);
 const callRef=ref(db,"call");
@@ -148,15 +222,11 @@ callBtn.onclick=startCall;
 async function startCall(){
   callScreen.style.display="flex";
   callStatus.innerText="Calling...";
-  
-  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  pc=new RTCPeerConnection({
-    iceServers:[{urls:'stun:stun.l.google.com:19302'}]
-  });
 
-  pc.ontrack=e=>{
-    remoteAudio.srcObject=e.streams[0];
-  };
+  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+
+  pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
 
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 
@@ -166,7 +236,7 @@ async function startCall(){
   set(callRef,{offer,from:uid});
 }
 
-// LISTEN CALL
+/* LISTEN */
 onValue(callRef,async snap=>{
   let data=snap.val();
   if(!data) return;
@@ -181,10 +251,7 @@ onValue(callRef,async snap=>{
       localStream=await navigator.mediaDevices.getUserMedia({audio:true});
       pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
 
-      pc.ontrack=e=>{
-        remoteAudio.srcObject=e.streams[0];
-      };
-
+      pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
       localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 
       await pc.setRemoteDescription(data.offer);
@@ -204,13 +271,14 @@ onValue(callRef,async snap=>{
   }
 });
 
-// MUTE
+/* MUTE */
 mute.onclick=()=>{
-  localStream.getAudioTracks()[0].enabled =
-  !localStream.getAudioTracks()[0].enabled;
+  let track=localStream.getAudioTracks()[0];
+  track.enabled=!track.enabled;
+  mute.innerText=track.enabled?"🔇":"🔊";
 };
 
-// END
+/* END */
 endCall.onclick=()=>{
   callScreen.style.display="none";
   remove(callRef);
