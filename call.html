@@ -43,10 +43,8 @@
     <button id="rejectBtn">❌ Reject</button>
   </div>
 </div>
-
 <script type="module">
 
-// ✅ UPDATED FIREBASE
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
 import { getDatabase, ref, set, onValue, remove, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
@@ -66,7 +64,24 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const analytics = getAnalytics(app);
 
-// ------------------ SAME CODE BELOW ------------------
+// ----------- FIXED ICE SERVERS (IMPORTANT) ----------
+const servers = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject"
+    }
+  ]
+};
+
+// ------------------ SAME CODE ------------------
 
 const callBtn=document.getElementById('callBtn');
 const hangupBtn=document.getElementById('hangupBtn');
@@ -82,27 +97,12 @@ const callControls=document.getElementById('callControls');
 const timerDisplay=document.getElementById('timer');
 
 let pc,localStream,isMuted=false,useSpeaker=false,timerInterval,seconds=0;
-const servers = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject"
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject"
-    }
-  ]
-};
 const uid=Math.random().toString(36).slice(2);
 
 const presenceRef=ref(db,'presence/'+uid);
 set(presenceRef,{online:true,time:serverTimestamp()});
 onDisconnect(presenceRef).remove();
+
 onValue(ref(db,'presence'),s=>{
   const d=s.val()||{};
   onlineCount.textContent=`💫 ${Object.keys(d).length} Online`;
@@ -116,30 +116,38 @@ function startTimer(){
     const m=String(Math.floor(seconds/60)).padStart(2,'0');
     const s=String(seconds%60).padStart(2,'0');
     timerDisplay.textContent=`${m}:${s}`;
-    if(seconds>=10800) endCall();
   },1000);
 }
 
 async function initPeerConnection(){
   pc=new RTCPeerConnection(servers);
+
   pc.onicecandidate=e=>{
     if(e.candidate){
       set(ref(db,'ice/'+uid+'/'+Date.now()),e.candidate.toJSON());
     }
   };
+
   pc.ontrack=e=>{
     remoteAudio.srcObject=e.streams[0];
+    remoteAudio.muted = false;
+    remoteAudio.play().catch(()=>{});
   };
+
   localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
 }
 
 async function startCallProcess(){
   localStream=await navigator.mediaDevices.getUserMedia({audio:true});
   localAudio.srcObject=localStream;
+
   await initPeerConnection();
+
   const offer=await pc.createOffer();
   await pc.setLocalDescription(offer);
+
   await set(ref(db,'activeCall'),{offer,from:uid});
+
   callBtn.disabled=true;
   callControls.style.display='block';
 }
@@ -149,25 +157,36 @@ callBtn.onclick=startCallProcess;
 onValue(ref(db,'activeCall'),async snap=>{
   const data=snap.val();
   if(!data) return;
+
   if(data.from!==uid && data.offer && !data.answer){
     incomingPopup.style.display='flex';
+
     acceptBtn.onclick=async()=>{
       incomingPopup.style.display='none';
+
       localStream=await navigator.mediaDevices.getUserMedia({audio:true});
       localAudio.srcObject=localStream;
+
       await initPeerConnection();
+
       await pc.setRemoteDescription(data.offer);
+
       const answer=await pc.createAnswer();
       await pc.setLocalDescription(answer);
+
       await set(ref(db,'activeCall/answer'),answer);
+
       callControls.style.display='block';
       startTimer();
     };
+
     rejectBtn.onclick=async()=>{
       incomingPopup.style.display='none';
       await remove(ref(db,'activeCall'));
     };
-  } else if(data.answer && pc && !pc.currentRemoteDescription){
+  }
+
+  else if(data.answer && pc && !pc.currentRemoteDescription){
     await pc.setRemoteDescription(data.answer);
     startTimer();
   }
@@ -181,39 +200,27 @@ muteBtn.onclick=()=>{
 
 speakerBtn.onclick=async()=>{
   useSpeaker=!useSpeaker;
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
-    if (audioOutputs.length > 0 && typeof remoteAudio.setSinkId === 'function') {
-      if (useSpeaker) {
-        await remoteAudio.setSinkId(audioOutputs[audioOutputs.length - 1].deviceId);
-        speakerBtn.textContent = "🔊 Speaker";
-      } else {
-        await remoteAudio.setSinkId(audioOutputs[0].deviceId);
-        speakerBtn.textContent = "🎧 Earpiece";
-      }
-    } else {
-      alert("Speaker toggle not supported on this device/browser.");
-    }
-  } catch (err) {
-    console.warn("Audio output switch failed:", err);
-  }
 };
 
 async function endCall(){
   clearInterval(timerInterval);
   if(pc) pc.close();
+
   await remove(ref(db,'activeCall'));
   await remove(ref(db,'ice'));
+
   callBtn.disabled=false;
   callControls.style.display='none';
+
   alert('Call Ended');
 }
+
 hangupBtn.onclick=endCall;
 
 onValue(ref(db,'ice'),snap=>{
   const data=snap.val();
   if(!data) return;
+
   Object.entries(data).forEach(([uid2,iceList])=>{
     if(uid2!==uid && pc){
       Object.values(iceList).forEach(c=>{
@@ -222,7 +229,9 @@ onValue(ref(db,'ice'),snap=>{
     }
   });
 });
+
 </script>
+
 
 </body>
 </html>
