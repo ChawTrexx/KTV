@@ -1,177 +1,199 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>🔥 Fixed Call</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔥 Voice Call Pro</title>
+
 <style>
-body{background:#0a0f1e;color:#fff;text-align:center;font-family:sans-serif}
-button{padding:10px 20px;margin:10px;border:none;border-radius:8px;background:#3b82f6;color:#fff}
-#incoming{display:none;background:#111;padding:20px;border-radius:10px}
+body{
+  margin:0;
+  background:#0a0f1e;
+  color:#fff;
+  font-family:Poppins;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.box{
+  background:#11182e;
+  padding:20px;
+  border-radius:15px;
+  width:320px;
+  text-align:center;
+  box-shadow:0 0 20px #00f0ff33;
+}
+input{
+  width:100%;
+  padding:10px;
+  margin:8px 0;
+  border:none;
+  border-radius:8px;
+  background:#1b2445;
+  color:#fff;
+}
+button{
+  padding:10px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.call{background:#00c853;}
+.end{background:#ff1744;}
+.accept{background:#00e676;}
+.reject{background:#ff5252;}
+
+#incoming{
+  display:none;
+  background:#1a237e;
+  padding:10px;
+  border-radius:10px;
+  margin-top:10px;
+}
 </style>
 </head>
 
 <body>
 
-<h2>📞 Auto Call</h2>
+<div class="box">
+  <h2>📞 Voice Call</h2>
 
-<button id="callBtn">📞 Call</button>
+  <input id="userId" readonly>
+  <input id="callTo" placeholder="Enter User ID">
 
-<div id="incoming">
-  <h3>📞 Incoming Call</h3>
-  <button id="accept">✅ Accept</button>
-  <button id="reject">❌ Reject</button>
+  <button class="call" onclick="startCall()">Call</button>
+  <button class="end" onclick="endCall()">End</button>
+
+  <div id="incoming">
+    <p>📲 Incoming Call...</p>
+    <button class="accept" onclick="acceptCall()">Accept</button>
+    <button class="reject" onclick="rejectCall()">Reject</button>
+  </div>
+
+  <audio id="remoteAudio" autoplay></audio>
 </div>
 
-<br>
-<button id="endBtn">❌ End Call</button>
-
-<audio id="remoteAudio" autoplay></audio>
+<audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/phone_alerts_and_rings.ogg" loop></audio>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, push, remove, get } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-const app = initializeApp({
- apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
- databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app"
-});
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import { getDatabase, ref, set, onValue, push, onChildAdded, remove } 
+from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+// 🔥 Firebase config (tumhara same)
+const firebaseConfig = {
+  apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
+  authDomain: "wechat-34e85.firebaseapp.com",
+  databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "wechat-34e85",
+};
+
+const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-let pc, localStream;
-let roomId=null;
-let uid=Math.random().toString(36).slice(2);
-let isBusy=false;
+// 👤 Auto user ID
+const userId = "user_" + Math.floor(Math.random()*10000);
+document.getElementById("userId").value = userId;
 
-const remoteAudio=document.getElementById("remoteAudio");
-const incoming=document.getElementById("incoming");
+let pc = new RTCPeerConnection({
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+});
 
-// 🔧 CREATE PC
-async function createPC(){
-  pc=new RTCPeerConnection({
-    iceServers:[{urls:"stun:stun.l.google.com:19302"}]
+let localStream;
+let currentCall = null;
+
+// 🎤 mic access
+navigator.mediaDevices.getUserMedia({ audio:true }).then(stream=>{
+  localStream = stream;
+  stream.getTracks().forEach(track=>pc.addTrack(track, stream));
+});
+
+// 🔊 remote audio
+pc.ontrack = e=>{
+  document.getElementById("remoteAudio").srcObject = e.streams[0];
+};
+
+// 🧊 ICE send
+pc.onicecandidate = e=>{
+  if(e.candidate && currentCall){
+    const refPath = "calls/"+currentCall+"/ice";
+    set(push(ref(db, refPath)), JSON.stringify(e.candidate));
+  }
+};
+
+// 🧊 ICE receive
+function listenICE(other){
+  onChildAdded(ref(db, "calls/"+other+"/ice"), snap=>{
+    const candidate = new RTCIceCandidate(JSON.parse(snap.val()));
+    pc.addIceCandidate(candidate);
   });
-
-  localStream=await navigator.mediaDevices.getUserMedia({audio:true});
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-
-  pc.ontrack=e=>remoteAudio.srcObject=e.streams[0];
-
-  pc.onicecandidate=e=>{
-    if(e.candidate){
-      push(ref(db,`calls/${roomId}/ice/${uid}`),e.candidate.toJSON());
-    }
-  };
-}
-
-// 🔄 RESET FUNCTION (IMPORTANT)
-async function resetCall(){
-  isBusy=false;
-
-  if(pc) pc.close();
-  if(localStream){
-    localStream.getTracks().forEach(t=>t.stop());
-  }
-
-  if(roomId){
-    await remove(ref(db,`calls/${roomId}`));
-  }
-
-  roomId=null;
-  incoming.style.display="none";
 }
 
 // 📞 CALL
-document.getElementById("callBtn").onclick=async()=>{
-  if(isBusy) return alert("Already in call");
+window.startCall = async ()=>{
+  const to = document.getElementById("callTo").value;
+  currentCall = to;
 
-  roomId="room_"+Date.now();
-  isBusy=true;
-
-  await createPC();
-
-  const offer=await pc.createOffer();
+  const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db,`calls/${roomId}`),{
-    offer,
-    from:uid,
-    status:"calling"
-  });
-
-  listenAnswer();
-  listenICE();
+  set(ref(db, "calls/"+to+"/offer"), JSON.stringify(offer));
+  listenAnswer(to);
+  listenICE(to);
 };
 
-// 👂 INCOMING LISTENER
-onValue(ref(db,"calls"),snap=>{
-  const calls=snap.val();
-  if(!calls || isBusy) return;
-
-  for(const id in calls){
-    const c=calls[id];
-    if(c.from!==uid && c.status==="calling"){
-      roomId=id;
-      isBusy=true;
-      incoming.style.display="block";
-      break;
-    }
+// 📲 Incoming detect
+onValue(ref(db, "calls/"+userId+"/offer"), snap=>{
+  if(snap.exists()){
+    document.getElementById("incoming").style.display="block";
+    document.getElementById("ringtone").play();
   }
 });
 
-// ✅ ACCEPT
-document.getElementById("accept").onclick=async()=>{
-  incoming.style.display="none";
+// ✅ Accept
+window.acceptCall = async ()=>{
+  document.getElementById("incoming").style.display="none";
+  document.getElementById("ringtone").pause();
 
-  await createPC();
+  const snap = await new Promise(res=>{
+    onValue(ref(db, "calls/"+userId+"/offer"), s=>res(s), {onlyOnce:true});
+  });
 
-  const snap=await get(ref(db,`calls/${roomId}`));
-  const data=snap.val();
+  const offer = JSON.parse(snap.val());
+  await pc.setRemoteDescription(offer);
 
-  await pc.setRemoteDescription(data.offer);
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
 
-  const ans=await pc.createAnswer();
-  await pc.setLocalDescription(ans);
+  set(ref(db, "calls/"+userId+"/answer"), JSON.stringify(answer));
 
-  await set(ref(db,`calls/${roomId}/answer`),ans);
-  await set(ref(db,`calls/${roomId}/status`),"connected");
-
-  listenICE();
+  listenICE(userId);
 };
 
-// ❌ REJECT
-document.getElementById("reject").onclick=async()=>{
-  await resetCall();
+// ❌ Reject
+window.rejectCall = ()=>{
+  document.getElementById("incoming").style.display="none";
+  document.getElementById("ringtone").pause();
 };
 
-// ❌ END CALL BUTTON
-document.getElementById("endBtn").onclick=async()=>{
-  await resetCall();
-};
-
-// 📥 ANSWER
-function listenAnswer(){
-  onValue(ref(db,`calls/${roomId}/answer`),async snap=>{
-    const ans=snap.val();
-    if(ans && !pc.currentRemoteDescription){
-      await pc.setRemoteDescription(ans);
-    }
+// 🔁 Listen answer
+function listenAnswer(to){
+  onValue(ref(db, "calls/"+to+"/answer"), async snap=>{
+    if(!snap.exists()) return;
+    const ans = JSON.parse(snap.val());
+    await pc.setRemoteDescription(ans);
   });
 }
 
-// ❄️ ICE
-function listenICE(){
-  onValue(ref(db,`calls/${roomId}/ice`),snap=>{
-    const data=snap.val();
-    if(!data || !pc) return;
-
-    Object.entries(data).forEach(([id,list])=>{
-      if(id!==uid){
-        Object.values(list).forEach(c=>{
-          pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
-        });
-      }
-    });
-  });
-}
+// ❌ End call
+window.endCall = ()=>{
+  pc.close();
+  remove(ref(db, "calls/"+userId));
+  alert("Call Ended");
+};
 
 </script>
 </body>
