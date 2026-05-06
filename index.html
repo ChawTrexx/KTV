@@ -3,75 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔥 Voice Call Pro</title>
-
+<title>🚀 Voice Call Pro - Working</title>
 <style>
-body{margin:0;font-family:sans-serif;background:#0a0f1e;color:#fff;text-align:center}
-
-/* UI */
-#online{position:fixed;top:10px;right:10px;background:#111;padding:8px 12px;border-radius:20px}
-button{padding:10px 20px;margin:8px;border:none;border-radius:10px;font-size:16px}
-
-/* CALL UI */
-#callUI{
-  position:fixed;inset:0;
-  background:#000;
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
-
-#controls{position:absolute;bottom:40px;display:flex;gap:20px}
-#controls button{width:65px;height:65px;border-radius:50%}
-
-#end{background:red;color:#fff}
-#mute{background:#333;color:#fff}
-
-/* INCOMING */
-#incoming{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,0.9);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
+  body{margin:0;font-family:sans-serif;background:#0a0f1e;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh}
+  #online{position:fixed;top:10px;right:10px;background:#1db954;padding:8px 15px;border-radius:20px;font-weight:bold;font-size:14px}
+  button{padding:15px 30px;margin:10px;border:none;border-radius:50px;font-size:18px;cursor:pointer;transition:0.3s;font-weight:bold}
+  #callBtn{background:#1db954;color:white}
+  #callBtn:hover{background:#1ed760}
+  
+  #callUI, #incoming{position:fixed;inset:0;background:rgba(10,15,30,0.98);display:none;justify-content:center;align-items:center;flex-direction:column;z-index:100}
+  #controls{margin-top:30px;display:flex;gap:25px}
+  .round-btn{width:70px;height:70px;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:24px}
+  #end{background:#ff3b30;color:#fff}
+  #mute{background:#3a3a3c;color:#fff}
+  #accept{background:#34c759;color:#fff}
+  #reject{background:#ff3b30;color:#fff}
 </style>
 </head>
-
 <body>
 
-<h2>🎧 Voice Call</h2>
-<button id="callBtn">📞 Start Call</button>
-<div id="online">0 Online</div>
+<div id="online">Checking...</div>
+<h2>🎧 High-Quality Voice</h2>
+<p>UID: <span id="myId">...</span></p>
+<button id="callBtn">📞 Global Call</button>
 
-<!-- CALL SCREEN -->
 <div id="callUI">
-  <h2 id="status">Calling...</h2>
-
+  <h2 id="status">Connecting...</h2>
   <div id="controls">
-    <button id="mute">🔇</button>
-    <button id="end">❌</button>
+    <button id="mute" class="round-btn">🎤</button>
+    <button id="end" class="round-btn">❌</button>
   </div>
 </div>
 
-<!-- INCOMING -->
 <div id="incoming">
-  <h2>📞 Incoming Call</h2>
-  <button id="accept">Accept</button>
-  <button id="reject">Reject</button>
+  <h2 id="callerName">📞 Someone is calling...</h2>
+  <div style="display:flex">
+    <button id="accept">Accept</button>
+    <button id="reject">Reject</button>
+  </div>
 </div>
 
 <audio id="remoteAudio" autoplay></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-import {
-  getDatabase, ref, set, push, onValue, remove, onDisconnect
-} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+import { getDatabase, ref, set, push, onValue, remove, onDisconnect, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-/* 🔥 FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyC8mmwZ_H-jTPNfZsTXIymIuD_wHN0KaXk",
   databaseURL: "https://wechat-34e85-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -79,144 +56,124 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
-/* USER */
-const uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2);
+const uid = localStorage.getItem("uid") || Math.random().toString(36).slice(2, 8);
 localStorage.setItem("uid", uid);
+document.getElementById('myId').innerText = uid;
 
-/* ONLINE */
-const presRef = ref(db,"online/"+uid);
-set(presRef,true);
-onDisconnect(presRef).remove();
+let pc, localStream, currentCallId = null;
+const iceConfig = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }] };
 
-onValue(ref(db,"online"), snap=>{
-  online.innerText = Object.keys(snap.val()||{}).length + " Online";
+// Online Presence Logic
+set(ref(db, `online/${uid}`), true);
+onDisconnect(ref(db, `online/${uid}`)).remove();
+onValue(ref(db, "online"), s => {
+  const count = s.val() ? Object.keys(s.val()).length : 0;
+  document.getElementById('online').innerText = `● ${count} Online`;
 });
 
-/* VARIABLES */
-let pc, localStream, callId=null;
+// Setup WebRTC Function
+async function setupWebRTC(id) {
+  pc = new RTCPeerConnection(iceConfig);
+  localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 
-/* START CALL */
-callBtn.onclick = async ()=>{
-  callId = Date.now().toString();
-
-  callUI.style.display="flex";
-  status.innerText="Calling...";
-
-  localStream = await navigator.mediaDevices.getUserMedia({audio:true});
-
-  pc = new RTCPeerConnection({
-    iceServers:[{urls:'stun:stun.l.google.com:19302'}]
-  });
-
-  pc.ontrack = e=>{
-    remoteAudio.srcObject = e.streams[0];
-  };
-
-  pc.onicecandidate = e=>{
-    if(e.candidate){
-      push(ref(db,"calls/"+callId+"/ice"), e.candidate.toJSON());
+  pc.ontrack = e => { remoteAudio.srcObject = e.streams[0]; };
+  
+  pc.onicecandidate = e => {
+    if (e.candidate) {
+      push(ref(db, `calls/${id}/ice_${uid}`), e.candidate.toJSON());
     }
   };
 
-  localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  // Listen for other person's ICE candidates
+  const otherUid = ""; // Dynamic in real scenarios
+  onChildAdded(ref(db, `calls/${id}/ice_other`), (snap) => {
+    if (snap.val()) pc.addIceCandidate(new RTCIceCandidate(snap.val()));
+  });
+}
 
+// Start Call (Caller side)
+callBtn.onclick = async () => {
+  currentCallId = uid + "_call";
+  status.innerText = "Calling...";
+  callUI.style.display = "flex";
+
+  await setupWebRTC(currentCallId);
+  
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await set(ref(db,"calls/"+callId),{
-    offer,
+  await set(ref(db, `calls/${currentCallId}`), {
+    offer: { type: offer.type, sdp: offer.sdp },
     from: uid,
-    status:"calling"
+    status: "pending"
+  });
+
+  // Watch for Answer
+  onValue(ref(db, `calls/${currentCallId}/answer`), async snap => {
+    if (snap.val() && !pc.currentRemoteDescription) {
+      await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+      status.innerText = "Connected";
+    }
+  });
+
+  // Listen for Caller ICE
+  onChildAdded(ref(db, `calls/${currentCallId}/ice_receiver`), snap => {
+    pc.addIceCandidate(new RTCIceCandidate(snap.val())).catch(e => {});
   });
 };
 
-/* LISTEN CALLS */
-onValue(ref(db,"calls"), async snap=>{
-  const calls = snap.val();
-  if(!calls) return;
+// Listen for Incoming (Receiver side)
+onValue(ref(db, "calls"), snap => {
+  const data = snap.val();
+  if (!data) return;
+  
+  Object.entries(data).forEach(async ([id, call]) => {
+    if (call.from !== uid && call.status === "pending") {
+      incoming.style.display = "flex";
+      currentCallId = id;
 
-  Object.entries(calls).forEach(async ([id,data])=>{
+      accept.onclick = async () => {
+        incoming.style.display = "none";
+        callUI.style.display = "flex";
+        status.innerText = "Connecting...";
 
-    // INCOMING
-    if(data.from !== uid && data.status==="calling"){
-      incoming.style.display="flex";
+        await setupWebRTC(id);
 
-      accept.onclick = async ()=>{
-        incoming.style.display="none";
-        callUI.style.display="flex";
-        callId = id;
-
-        localStream = await navigator.mediaDevices.getUserMedia({audio:true});
-
-        pc = new RTCPeerConnection({
-          iceServers:[{urls:'stun:stun.l.google.com:19302'}]
-        });
-
-        pc.ontrack = e=>{
-          remoteAudio.srcObject = e.streams[0];
-        };
-
-        pc.onicecandidate = e=>{
-          if(e.candidate){
-            push(ref(db,"calls/"+id+"/ice"), e.candidate.toJSON());
-          }
-        };
-
-        localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
-
-        await pc.setRemoteDescription(data.offer);
-
+        await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        await set(ref(db,"calls/"+id+"/answer"),answer);
-        await set(ref(db,"calls/"+id+"/status"),"connected");
-
-        status.innerText="Connected";
+        await set(ref(db, `calls/${id}/answer`), { type: answer.type, sdp: answer.sdp });
+        await set(ref(db, `calls/${id}/status`), "active");
+        status.innerText = "Connected";
       };
 
-      reject.onclick = ()=> remove(ref(db,"calls/"+id));
-    }
-
-    // ANSWER RECEIVED
-    if(data.from === uid && data.answer && pc && !pc.currentRemoteDescription){
-      await pc.setRemoteDescription(data.answer);
-      status.innerText="Connected";
-    }
-
-  });
-});
-
-/* ICE EXCHANGE */
-onValue(ref(db,"calls"), snap=>{
-  const calls = snap.val();
-  if(!calls) return;
-
-  Object.values(calls).forEach(call=>{
-    if(call.ice && pc){
-      Object.values(call.ice).forEach(c=>{
-        pc.addIceCandidate(new RTCIceCandidate(c)).catch(()=>{});
+      // Listen for Receiver ICE
+      onChildAdded(ref(db, `calls/${id}/ice_${call.from}`), snap => {
+        pc.addIceCandidate(new RTCIceCandidate(snap.val())).catch(e => {});
       });
+      
+      reject.onclick = () => remove(ref(db, `calls/${id}`));
     }
   });
 });
 
-/* MUTE */
-mute.onclick = ()=>{
+// End Call Logic
+const cleanup = () => {
+  if (localStream) localStream.getTracks().forEach(t => t.stop());
+  if (pc) pc.close();
+  callUI.style.display = "none";
+  incoming.style.display = "none";
+  if (currentCallId) remove(ref(db, `calls/${currentCallId}`));
+};
+
+end.onclick = cleanup;
+mute.onclick = () => {
   const t = localStream.getAudioTracks()[0];
   t.enabled = !t.enabled;
-};
-
-/* END CALL */
-end.onclick = async ()=>{
-  if(callId){
-    await remove(ref(db,"calls/"+callId));
-  }
-  if(pc) pc.close();
-  callUI.style.display="none";
+  mute.innerText = t.enabled ? "🎤" : "🔇";
 };
 </script>
-
 </body>
 </html>
