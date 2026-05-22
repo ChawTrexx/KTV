@@ -1,36 +1,31 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Shortlink API System</title>
+<title>Shortlink System (Supabase)</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
-background:#020617;
-font-family:Arial;
+  background:#020617;
+  font-family:Arial;
 }
-
 .glow{
-box-shadow:0 0 30px rgba(0,255,255,.20);
+  box-shadow:0 0 30px rgba(0,255,255,0.15);
 }
-
 </style>
-
 </head>
+
 <body class="min-h-screen flex items-center justify-center p-5">
 
 <div class="w-full max-w-2xl bg-slate-900 border border-cyan-500 rounded-3xl p-6 glow">
 
 <h1 class="text-4xl font-bold text-cyan-400 text-center mb-6">
-⚡ Supabase Shortlink API
+⚡ Supabase Shortlink System
 </h1>
 
 <input
@@ -42,19 +37,14 @@ class="w-full p-4 rounded-2xl bg-slate-800 text-white outline-none border border
 
 <button
 onclick="createShortLink()"
-class="w-full bg-cyan-500 hover:bg-cyan-400 transition-all text-black font-bold p-4 rounded-2xl"
+class="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold p-4 rounded-2xl"
 >
 Generate Shortlink
 </button>
 
-<div
-id="resultBox"
-class="hidden mt-6"
->
+<div id="resultBox" class="hidden mt-6">
 
-<p class="text-slate-400 mb-2">
-Generated Shortlink
-</p>
+<p class="text-slate-400 mb-2">Generated Shortlink</p>
 
 <div class="flex gap-2">
 
@@ -72,133 +62,89 @@ Copy
 </button>
 
 </div>
-
 </div>
 
 </div>
 
 <script>
-
-// =====================================
+// ======================
 // SUPABASE CONFIG
-// =====================================
+// ======================
+const SUPABASE_URL = "https://trdluuhqduebfipnyxlm.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
-const SUPABASE_URL =
-"https://trdluuhqduebfipnyxlm.supabase.co";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SUPABASE_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
-
-const supabase =
-window.supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
-
-// =====================================
-// RANDOM CODE
-// =====================================
-
-function generateCode(length = 6){
-
-const chars =
-"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-let result = "";
-
-for(let i=0;i<length;i++){
-
-result += chars.charAt(
-Math.floor(Math.random() * chars.length)
-);
-
+// ======================
+// GENERATE CODE
+// ======================
+function generateCode(len = 6){
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for(let i=0;i<len;i++){
+    out += chars[Math.floor(Math.random()*chars.length)];
+  }
+  return out;
 }
 
-return result;
-
-}
-
-// =====================================
+// ======================
 // CREATE SHORTLINK
-// =====================================
-
+// ======================
 async function createShortLink(){
 
-const longUrl =
-document.getElementById("urlInput").value.trim();
-
+const longUrl = document.getElementById("urlInput").value.trim();
 if(!longUrl){
-
-alert("Enter URL");
-
-return;
-
+  alert("Enter URL");
+  return;
 }
 
-const code = generateCode();
+let code = generateCode();
 
-const shortUrl =
-window.location.origin +
-"/" +
-code;
+// insert (retry if duplicate)
+let inserted = false;
 
-// SAVE DATABASE
+while(!inserted){
+
 const { error } = await supabase
 .from("shortlinks")
-.insert([
-{
-original_url: longUrl,
-short_code: code
+.insert([{
+  original_url: longUrl,
+  short_code: code
+}]);
+
+if(!error){
+  inserted = true;
+}else{
+  code = generateCode();
 }
-]);
-
-if(error){
-
-alert(error.message);
-
-return;
 
 }
 
-// SHOW RESULT
-document.getElementById("resultBox")
-.classList.remove("hidden");
+const shortUrl = window.location.origin + "/" + code;
 
-document.getElementById("shortlink")
-.value = shortUrl;
+document.getElementById("resultBox").classList.remove("hidden");
+document.getElementById("shortlink").value = shortUrl;
 
 }
 
-// =====================================
-// COPY LINK
-// =====================================
-
+// ======================
+// COPY
+// ======================
 function copyLink(){
-
-const input =
-document.getElementById("shortlink");
-
-input.select();
-
-document.execCommand("copy");
-
-alert("Copied!");
-
+  const input = document.getElementById("shortlink");
+  input.select();
+  document.execCommand("copy");
+  alert("Copied!");
 }
 
-// =====================================
+// ======================
 // REDIRECT SYSTEM
-// =====================================
-
+// ======================
 async function redirectSystem(){
 
-const path =
-window.location.pathname.replace("/","");
+const path = window.location.pathname.replace("/","").replace("index.html","");
 
-if(
-path === "" ||
-path === "index.html"
-) return;
+if(!path) return;
 
 const { data } = await supabase
 .from("shortlinks")
@@ -207,87 +153,12 @@ const { data } = await supabase
 .single();
 
 if(data){
-
-window.location.href =
-data.original_url;
-
-}else{
-
-document.body.innerHTML = `
-<div class="min-h-screen flex items-center justify-center bg-black text-red-500 text-4xl font-bold">
-Invalid Shortlink
-</div>
-`;
-
+  window.location.href = data.original_url;
 }
 
 }
 
 redirectSystem();
-
-// =====================================
-// API SYSTEM
-// =====================================
-
-// Example:
-// https://yourdomain.com/?api=create&url=https://google.com
-
-async function apiSystem(){
-
-const params =
-new URLSearchParams(window.location.search);
-
-const api =
-params.get("api");
-
-const url =
-params.get("url");
-
-if(api !== "create") return;
-
-if(!url){
-
-document.body.innerHTML =
-JSON.stringify({
-status:false,
-message:"URL Missing"
-});
-
-return;
-
-}
-
-const code = generateCode();
-
-const shortUrl =
-window.location.origin +
-"/" +
-code;
-
-// SAVE DATABASE
-await supabase
-.from("shortlinks")
-.insert([
-{
-original_url:url,
-short_code:code
-}
-]);
-
-// JSON OUTPUT
-document.body.innerHTML =
-`<pre style="color:#00ffcc;padding:20px;font-size:18px;">
-${JSON.stringify({
-status:true,
-shortlink:shortUrl,
-code:code,
-url:url
-},null,2)}
-</pre>`;
-
-}
-
-apiSystem();
 
 </script>
 
