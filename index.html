@@ -463,57 +463,104 @@ async function shareVideo(){
 
     
         
+
+</script>
+    <script>
+
+// ===============================
+// 🔥 CONFIG (GLOBAL ONCE)
+// ===============================
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+const supabaseKey = "YOUR_SUPABASE_ANON_KEY";
+
+const botToken = "YOUR_BOT_TOKEN";
+const chatId = "YOUR_CHAT_ID";
 
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-// random code
+// ===============================
+// 🔥 GLOBAL VARIABLES
+// ===============================
+let currentTeraLink = null;
+let uploadedThumb = null;
+
+// ===============================
+// 🔥 NOTIFICATION
+// ===============================
+function showNotify(msg){
+  alert(msg); // replace with your UI toast if needed
+}
+
+// ===============================
+// 🔥 RANDOM CODE GENERATOR
+// ===============================
 function genCode(){
   return Math.random().toString(36).substring(2, 8);
 }
 
+// ===============================
+// 🔥 CREATE SHORT LINK (OPTIONAL MANUAL)
+// ===============================
 async function createLink(){
+
   const longUrl = document.getElementById("longUrl").value;
 
   if(!longUrl){
-    alert("URL daal pehle");
+    showNotify("❌ URL daal pehle");
     return;
   }
 
   const code = genCode();
 
-  const { data, error } = await client
+  const { error } = await client
     .from("links")
-    .insert([{ long_url: longUrl, short_code: code }]);
+    .insert([{ 
+      long_url: longUrl, 
+      short_code: code 
+    }]);
 
   if(error){
     console.log(error);
-    alert("Error: check console");
+    showNotify("❌ DB Error");
     return;
   }
 
   const shortUrl = window.location.origin + "/r.html?c=" + code;
 
   document.getElementById("result").innerHTML =
-    "Short Link: <a href='" + shortUrl + "' target='_blank'>" + shortUrl + "</a>";
+    `Short Link: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`;
 }
 
+// ===============================
+// 🔥 MAIN SHARE BUTTON
+// ===============================
+async function shareVideo(){
+
+  if(!currentTeraLink){
+    showNotify("❌ Play Video First");
+    return;
+  }
+
+  if(!uploadedThumb){
+    showNotify("⏳ Thumbnail Generating...");
+    return;
+  }
+
+  await sendToTelegram();
+}
 
 // ===============================
-// 🔥 TELEGRAM PART (UPDATED)
+// 🔥 SEND TO TELEGRAM + SUPABASE
 // ===============================
-
 async function sendToTelegram(){
 
   try{
 
     showNotify("📤 Sending To Telegram...");
 
-    // 🔥 Generate short code
     const code = genCode();
 
-    // 🔥 Save mapping in Supabase
+    // 🔥 SAVE TO SUPABASE
     const { error } = await client
       .from("links")
       .insert([{ 
@@ -527,18 +574,17 @@ async function sendToTelegram(){
       return;
     }
 
-    // 🔥 FINAL SHORT LINK (THIS IS SENT TO TELEGRAM)
+    // 🔥 SHORT LINK
     const shareUrl =
       "https://short-terabox-link.vercel.app/r.html?c=" + code;
 
-    // 🔥 Caption
     const caption =
-      "🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨\n"
-      + shareUrl;
+      "🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨\n\n" +
+      shareUrl;
 
-    // 🔥 Send Photo
+    // 🔥 SEND TO TELEGRAM
     const response = await fetch(
-      "https://api.telegram.org/bot" + botToken + "/sendPhoto",
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
       {
         method: "POST",
         headers: {
@@ -557,7 +603,7 @@ async function sendToTelegram(){
     console.log(data);
 
     if(data.ok){
-      showNotify("✅ Sent To Telegram");
+      showNotify("✅ Sent To Telegram Successfully");
     } else {
       showNotify("❌ Telegram Error");
     }
@@ -566,9 +612,9 @@ async function sendToTelegram(){
     console.log(e);
     showNotify("❌ Network Error");
   }
-
 }
-</script>
+
+    </script>
     
 
 </body>
