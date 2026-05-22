@@ -163,38 +163,37 @@ const url = params.get("url");
 if(api !== "create") return;
 
 if(!url){
-document.body.innerHTML = JSON.stringify({
-status:false,
-message:"URL Missing"
-});
-return;
+  document.body.innerHTML = JSON.stringify({
+    status:false,
+    message:"URL Missing"
+  });
+  return;
 }
 
 const code = generateCode();
 
-const shortUrl = window.location.origin + "/" + code;
-
-// SAVE
 await supabase
 .from("shortlinks")
-.insert([{ original_url: url, short_code: code }]);
+.insert([{
+  original_url:url,
+  short_code:code
+}]);
 
-// RESPONSE
+const shortUrl = window.location.origin + "/" + code;
+
+// clean API response (better)
 document.body.innerHTML = `
 <pre style="color:#00ffcc;padding:20px;font-size:16px;">
 ${JSON.stringify({
-status:true,
-shortlink: shortUrl,
-code: code,
-url: url
-}, null, 2)}
+  status:true,
+  shortlink:shortUrl,
+  code:code,
+  url:url
+},null,2)}
 </pre>
 `;
 
 }
-
-apiSystem();
-
 </script>
 
 </body>
