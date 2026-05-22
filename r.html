@@ -2,12 +2,92 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Redirecting...</title>
+<title>Video Ready</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: radial-gradient(circle at top, #1e293b, #0f172a);
+  color:white;
+}
+
+/* glass card */
+.card{
+  width:320px;
+  padding:25px;
+  border-radius:16px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  border:1px solid rgba(255,255,255,0.1);
+  text-align:center;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:scale(0.9);}
+  to{opacity:1; transform:scale(1);}
+}
+
+h2{
+  margin-bottom:10px;
+  font-size:20px;
+}
+
+p{
+  font-size:14px;
+  opacity:0.8;
+}
+
+button{
+  margin-top:18px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background: linear-gradient(90deg,#22c55e,#16a34a);
+  color:white;
+  font-size:15px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover{
+  transform:scale(1.03);
+  box-shadow:0 0 15px rgba(34,197,94,0.4);
+}
+
+.badge{
+  display:inline-block;
+  padding:4px 10px;
+  font-size:12px;
+  border-radius:20px;
+  background:#22c55e22;
+  color:#22c55e;
+  margin-bottom:10px;
+}
+</style>
 </head>
-<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;">
-<p id="msg">Redirecting...</p>
+
+<body>
+
+<div class="card">
+  <div class="badge">✓ Verified Link</div>
+  <h2 id="title">Preparing your video...</h2>
+  <p>Click below to continue watching</p>
+
+  <button id="btn" style="display:none;" onclick="go()">
+    ▶ Watch Video Now
+  </button>
+</div>
 
 <script>
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
@@ -15,40 +95,40 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ✅ GET CODE PROPERLY
 const params = new URLSearchParams(window.location.search);
 const code = params.get("c");
 
-async function go() {
-  if (!code) {
-    document.getElementById("msg").innerText = "Invalid Link (No Code)";
+let finalUrl = "";
+
+async function load() {
+
+  if(!code){
+    document.getElementById("title").innerText = "Invalid Link";
     return;
   }
 
   const { data, error } = await client
     .from("links")
-    .select("*")
+    .select("long_url")
     .eq("short_code", code)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    console.log(error);
-    document.getElementById("msg").innerText = "Database Error";
+  if(error || !data){
+    document.getElementById("title").innerText = "Link Not Found";
     return;
   }
 
-  if (data && data.long_url) {
-    document.getElementById("msg").innerText = "Redirecting...";
+  finalUrl = data.long_url;
 
-    setTimeout(() => {
-      window.location.href = data.long_url;
-    }, 800);
-  } else {
-    document.getElementById("msg").innerText = "Link Not Found";
-  }
+  document.getElementById("title").innerText = "Your video is ready";
+  document.getElementById("btn").style.display = "block";
 }
 
-go();
+function go(){
+  window.location.href = finalUrl;
+}
+
+load();
 </script>
 
 </body>
