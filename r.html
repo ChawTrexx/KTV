@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Redirecting...</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<p>Redirecting...</p>
+
+<script>
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+const code = new URLSearchParams(window.location.search).get("c");
+
+async function go(){
+  const { data, error } = await supabase
+    .from("links")
+    .select("*")
+    .eq("short_code", code)
+    .single();
+
+  if(data){
+    window.location.href = data.long_url;
+  } else {
+    document.body.innerHTML = "Invalid Link";
+  }
+}
+
+go();
+</script>
+
+</body>
+</html>
