@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Simple Shortlink</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.box {
+  background:#111827;
+  padding:20px;
+  border-radius:10px;
+  width:320px;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  margin:10px 0;
+  border:none;
+  border-radius:5px;
+}
+
+button {
+  width:100%;
+  padding:10px;
+  background:#22c55e;
+  border:none;
+  color:white;
+  cursor:pointer;
+  border-radius:5px;
+}
+
+a {
+  color:#60a5fa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🔗 Shortlink Maker</h2>
+
+  <input id="longUrl" placeholder="Enter long URL">
+
+  <button onclick="createLink()">Generate</button>
+
+  <p id="result"></p>
+</div>
+
+<script>
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// random short code
+function genCode(){
+  return Math.random().toString(36).substring(2, 8);
+}
+
+async function createLink(){
+  const longUrl = document.getElementById("longUrl").value;
+  const code = genCode();
+
+  const { data, error } = await supabase
+    .from("links")
+    .insert([{ long_url: longUrl, short_code: code }]);
+
+  if(error){
+    alert("Error creating link");
+    return;
+  }
+
+  const shortUrl = window.location.origin + "/r.html?c=" + code;
+
+  document.getElementById("result").innerHTML =
+    "Short Link: <a href='" + shortUrl + "' target='_blank'>" + shortUrl + "</a>";
+}
+</script>
+
+</body>
+</html>
