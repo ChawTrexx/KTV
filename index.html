@@ -461,85 +461,115 @@ async function shareVideo(){
         return;
     }
 
-    // 🔥 Share URL
+    
+        
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+
+const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+// random code
+function genCode(){
+  return Math.random().toString(36).substring(2, 8);
+}
+
+async function createLink(){
+  const longUrl = document.getElementById("longUrl").value;
+
+  if(!longUrl){
+    alert("URL daal pehle");
+    return;
+  }
+
+  const code = genCode();
+
+  const { data, error } = await client
+    .from("links")
+    .insert([{ long_url: longUrl, short_code: code }]);
+
+  if(error){
+    console.log(error);
+    alert("Error: check console");
+    return;
+  }
+
+  const shortUrl = window.location.origin + "/r.html?c=" + code;
+
+  document.getElementById("result").innerHTML =
+    "Short Link: <a href='" + shortUrl + "' target='_blank'>" + shortUrl + "</a>";
+}
+
+
+// ===============================
+// 🔥 TELEGRAM PART (UPDATED)
+// ===============================
+
+async function sendToTelegram(){
+
+  try{
+
+    showNotify("📤 Sending To Telegram...");
+
+    // 🔥 Generate short code
+    const code = genCode();
+
+    // 🔥 Save mapping in Supabase
+    const { error } = await client
+      .from("links")
+      .insert([{ 
+        long_url: currentTeraLink, 
+        short_code: code 
+      }]);
+
+    if(error){
+      console.log(error);
+      showNotify("❌ DB Error");
+      return;
+    }
+
+    // 🔥 FINAL SHORT LINK (THIS IS SENT TO TELEGRAM)
     const shareUrl =
-    "https://teen18.vercel.app/Q.html?="
-    + encodeURIComponent(currentTeraLink);
+      "https://short-terabox-link.vercel.app/r.html?c=" + code;
 
     // 🔥 Caption
     const caption =
-    "🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨\n"
-    + shareUrl;
+      "🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨\n"
+      + shareUrl;
 
-    try{
+    // 🔥 Send Photo
+    const response = await fetch(
+      "https://api.telegram.org/bot" + botToken + "/sendPhoto",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: uploadedThumb,
+          caption: caption
+        })
+      }
+    );
 
-        showNotify(
-            "📤 Sending To Telegram..."
-        );
+    const data = await response.json();
 
-        // 🔥 Send Photo
-        const response =
-        await fetch(
+    console.log(data);
 
-            "https://api.telegram.org/bot"
-            + botToken
-            + "/sendPhoto",
-
-            {
-
-                method:"POST",
-
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
-
-                body:JSON.stringify({
-
-                    chat_id:chatId,
-
-                    photo:uploadedThumb,
-
-                    caption:caption
-
-                })
-
-            }
-
-        );
-
-        const data =
-        await response.json();
-
-        console.log(data);
-
-        if(data.ok){
-
-            showNotify(
-                "✅ Sent To Telegram"
-            );
-
-        }else{
-
-            showNotify(
-                "❌ Telegram Error"
-            );
-
-        }
-
-    }catch(e){
-
-        console.log(e);
-
-        showNotify(
-            "❌ Network Error"
-        );
-
+    if(data.ok){
+      showNotify("✅ Sent To Telegram");
+    } else {
+      showNotify("❌ Telegram Error");
     }
 
-}
+  }catch(e){
+    console.log(e);
+    showNotify("❌ Network Error");
+  }
 
+}
 </script>
+    
 
 </body>
 </html>
