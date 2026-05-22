@@ -6,29 +6,45 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-
-<p>Redirecting...</p>
+<body style="background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;">
+<p id="msg">Redirecting...</p>
 
 <script>
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-const code = new URLSearchParams(window.location.search).get("c");
+// ✅ GET CODE PROPERLY
+const params = new URLSearchParams(window.location.search);
+const code = params.get("c");
 
-async function go(){
-  const { data, error } = await supabase
+async function go() {
+  if (!code) {
+    document.getElementById("msg").innerText = "Invalid Link (No Code)";
+    return;
+  }
+
+  const { data, error } = await client
     .from("links")
     .select("*")
     .eq("short_code", code)
     .single();
 
-  if(data){
-    window.location.href = data.long_url;
+  if (error) {
+    console.log(error);
+    document.getElementById("msg").innerText = "Database Error";
+    return;
+  }
+
+  if (data && data.long_url) {
+    document.getElementById("msg").innerText = "Redirecting...";
+
+    setTimeout(() => {
+      window.location.href = data.long_url;
+    }, 800);
   } else {
-    document.body.innerHTML = "Invalid Link";
+    document.getElementById("msg").innerText = "Link Not Found";
   }
 }
 
