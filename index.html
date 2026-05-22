@@ -184,10 +184,14 @@ async function shareVideo(){
 
     const code = Math.random().toString(36).slice(2,8);
 
-    await client.from("links").insert([{
-      long_url: currentTeraLink,
-      short_code: code
-    }]);
+    const shareLink =
+"https://teen18.vercel.app/Q.html?=" +
+encodeURIComponent(currentTeraLink);
+
+await client.from("links").insert([{
+  long_url: shareLink,
+  short_code: code
+}]);
 
     const shortUrl =
     "https://short-terabox-link.vercel.app/r.html?c="+code;
