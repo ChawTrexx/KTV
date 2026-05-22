@@ -65,23 +65,30 @@ a {
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-// random short code
+// random code
 function genCode(){
   return Math.random().toString(36).substring(2, 8);
 }
 
 async function createLink(){
   const longUrl = document.getElementById("longUrl").value;
+
+  if(!longUrl){
+    alert("URL daal pehle");
+    return;
+  }
+
   const code = genCode();
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("links")
     .insert([{ long_url: longUrl, short_code: code }]);
 
   if(error){
-    alert("Error creating link");
+    console.log(error);
+    alert("Error: check console");
     return;
   }
 
@@ -91,6 +98,5 @@ async function createLink(){
     "Short Link: <a href='" + shortUrl + "' target='_blank'>" + shortUrl + "</a>";
 }
 </script>
-
 </body>
 </html>
