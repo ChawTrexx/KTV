@@ -42,7 +42,8 @@ class="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold p-4 rounded-xl"
 Generate Shortlink
 </button>
 
-<div id="resultBox" class="mt-6 bg-slate-800 p-4 rounded-xl border border-cyan-500">
+<!-- hidden क्लास वापस जोड़ दी है ताकि शुरू में बॉक्स न दिखे -->
+<div id="resultBox" class="hidden mt-6 bg-slate-800 p-4 rounded-xl border border-cyan-500">
 
 <p class="text-gray-300 mb-2">Your Shortlink:</p>
 
@@ -89,111 +90,107 @@ function generateCode(len=6){
 
 // ================= CREATE SHORTLINK =================
 async function createShortLink(){
+  const url = document.getElementById("urlInput").value.trim();
 
-const url = document.getElementById("urlInput").value.trim();
+  if(!url){
+    alert("Enter URL");
+    return;
+  }
 
-if(!url){
-  alert("Enter URL");
-  return;
-}
+  let code = generateCode();
 
-let code = generateCode();
+  // save to supabase
+  const { error } = await supabase
+    .from("shortlinks")
+    .insert([{ original_url: url, short_code: code }]);
 
-// save
-const { error } = await supabase
-.from("shortlinks")
-.insert([{ original_url: url, short_code: code }]);
+  if(error){
+    alert("Supabase Error: " + error.message);
+    return;
+  }
 
-if(error){
-  alert(error.message);
-  return;
-}
+  // Vercel/Domain के हिसाब से सही URL बनाना
+  const short = window.location.origin + "/" + code;
 
-const short = window.location.origin + "/" + code;
-
-// SHOW UI
-document.getElementById("resultBox").classList.remove("hidden");
-document.getElementById("shortlink").value = short;
-document.getElementById("msg").innerText = "Link generated ✔";
-
+  // SHOW UI
+  document.getElementById("resultBox").classList.remove("hidden");
+  document.getElementById("shortlink").value = short;
+  document.getElementById("msg").innerText = "Link generated ✔";
 }
 
 // ================= COPY =================
 function copyLink(){
-
-const input = document.getElementById("shortlink");
-input.select();
-document.execCommand("copy");
-
-document.getElementById("msg").innerText = "Copied ✔";
-
+  const input = document.getElementById("shortlink");
+  input.select();
+  document.execCommand("copy");
+  document.getElementById("msg").innerText = "Copied ✔";
 }
 
 // ================= REDIRECT SYSTEM =================
 async function redirectSystem(){
+  // स्लैश हटाने का बेहतर तरीका ताकि रूटीन गड़बड़ न हो
+  const path = window.location.pathname.split('/').filter(Boolean)[0];
 
-const path = window.location.pathname.replace("/","");
+  // अगर कोई पाथ नहीं है या index.html है तो रुक जाओ
+  if(!path || path === "index.html") return;
 
-if(!path || path==="index.html") return;
+  const { data, error } = await supabase
+    .from("shortlinks")
+    .select("original_url")
+    .eq("short_code", path)
+    .single();
 
-const { data } = await supabase
-.from("shortlinks")
-.select("*")
-.eq("short_code", path)
-.single();
-
-if(data){
-  window.location.href = data.original_url;
+  if (data && data.original_url) {
+    window.location.href = data.original_url;
+  }
 }
-
-}
-
-redirectSystem();
 
 // ================= API SYSTEM =================
 // ?api=create&url=xxxx
-
 async function apiSystem(){
+  const params = new URLSearchParams(window.location.search);
+  const api = params.get("api");
+  const url = params.get("url");
 
-const params = new URLSearchParams(window.location.search);
+  if(api !== "create") return;
 
-const api = params.get("api");
-const url = params.get("url");
+  if(!url){
+    document.body.innerHTML = JSON.stringify({
+      status:false,
+      message:"URL Missing"
+    });
+    return;
+  }
 
-if(api !== "create") return;
+  const code = generateCode();
 
-if(!url){
-  document.body.innerHTML = JSON.stringify({
-    status:false,
-    message:"URL Missing"
-  });
-  return;
-}
+  const { error } = await supabase
+    .from("shortlinks")
+    .insert([{ original_url: url, short_code: code }]);
 
-const code = generateCode();
+  if(error) {
+    document.body.innerHTML = JSON.stringify({ status: false, message: error.message });
+    return;
+  }
 
-await supabase
-.from("shortlinks")
-.insert([{
-  original_url:url,
-  short_code:code
-}]);
+  const shortUrl = window.location.origin + "/" + code;
 
-const shortUrl = window.location.origin + "/" + code;
-
-// clean API response (better)
-document.body.innerHTML = `
-<pre style="color:#00ffcc;padding:20px;font-size:16px;">
+  document.body.innerHTML = `
+    <pre style="color:#00ffcc;padding:20px;font-size:16px;background:#020617;height:100vh;">
 ${JSON.stringify({
   status:true,
   shortlink:shortUrl,
   code:code,
   url:url
 },null,2)}
-</pre>
-`;
-
+    </pre>
+  `;
 }
+
+// दोनों सिस्टम को रन करना जरूरी है
+redirectSystem();
+apiSystem();
+
 </script>
 
 </body>
