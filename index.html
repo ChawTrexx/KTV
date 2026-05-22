@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Shortlink System (Supabase)</title>
+<title>Supabase Shortlink System</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,136 +15,126 @@ body{
   font-family:Arial;
 }
 .glow{
-  box-shadow:0 0 30px rgba(0,255,255,0.15);
+  box-shadow:0 0 25px rgba(0,255,255,0.15);
 }
 </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-5">
+<body class="flex items-center justify-center min-h-screen p-5">
 
-<div class="w-full max-w-2xl bg-slate-900 border border-cyan-500 rounded-3xl p-6 glow">
+<div class="w-full max-w-xl bg-slate-900 border border-cyan-500 rounded-3xl p-6 glow">
 
-<h1 class="text-4xl font-bold text-cyan-400 text-center mb-6">
-⚡ Supabase Shortlink System
+<h1 class="text-3xl font-bold text-cyan-400 text-center mb-6">
+⚡ Shortlink System
 </h1>
 
 <input
 id="urlInput"
 type="text"
 placeholder="Paste Long URL..."
-class="w-full p-4 rounded-2xl bg-slate-800 text-white outline-none border border-slate-700 mb-4"
+class="w-full p-4 rounded-xl bg-slate-800 text-white outline-none mb-4 border border-slate-700"
 />
 
 <button
 onclick="createShortLink()"
-class="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold p-4 rounded-2xl"
+class="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold p-4 rounded-xl"
 >
 Generate Shortlink
 </button>
 
-<div id="resultBox" class="hidden mt-6">
+<div id="resultBox" class="hidden mt-6 bg-slate-800 p-4 rounded-xl border border-cyan-500">
 
-<p class="text-slate-400 mb-2">Generated Shortlink</p>
+<p class="text-gray-300 mb-2">Your Shortlink:</p>
 
 <div class="flex gap-2">
 
 <input
 id="shortlink"
 readonly
-class="flex-1 p-3 rounded-xl bg-slate-800 text-cyan-400 outline-none"
+class="flex-1 p-3 rounded-lg bg-slate-900 text-cyan-300 outline-none"
 />
 
 <button
 onclick="copyLink()"
-class="bg-green-500 px-5 rounded-xl font-bold"
+class="bg-green-500 px-4 rounded-lg font-bold"
 >
 Copy
 </button>
 
 </div>
+
+<p id="msg" class="text-green-400 mt-3 text-sm"></p>
+
 </div>
 
 </div>
 
 <script>
-// ======================
-// SUPABASE CONFIG
-// ======================
+
+// ================= SUPABASE =================
 const SUPABASE_URL = "https://trdluuhqduebfipnyxlm.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ======================
-// GENERATE CODE
-// ======================
-function generateCode(len = 6){
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let out = "";
+// ================= RANDOM CODE =================
+function generateCode(len=6){
+  const c="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let r="";
   for(let i=0;i<len;i++){
-    out += chars[Math.floor(Math.random()*chars.length)];
+    r+=c[Math.floor(Math.random()*c.length)];
   }
-  return out;
+  return r;
 }
 
-// ======================
-// CREATE SHORTLINK
-// ======================
+// ================= CREATE SHORTLINK =================
 async function createShortLink(){
 
-const longUrl = document.getElementById("urlInput").value.trim();
-if(!longUrl){
+const url = document.getElementById("urlInput").value.trim();
+
+if(!url){
   alert("Enter URL");
   return;
 }
 
 let code = generateCode();
 
-// insert (retry if duplicate)
-let inserted = false;
-
-while(!inserted){
-
+// save
 const { error } = await supabase
 .from("shortlinks")
-.insert([{
-  original_url: longUrl,
-  short_code: code
-}]);
+.insert([{ original_url: url, short_code: code }]);
 
-if(!error){
-  inserted = true;
-}else{
-  code = generateCode();
+if(error){
+  alert(error.message);
+  return;
 }
 
-}
+const short = window.location.origin + "/" + code;
 
-const shortUrl = window.location.origin + "/" + code;
-
+// SHOW UI
 document.getElementById("resultBox").classList.remove("hidden");
-document.getElementById("shortlink").value = shortUrl;
+document.getElementById("shortlink").value = short;
+document.getElementById("msg").innerText = "Link generated ✔";
 
 }
 
-// ======================
-// COPY
-// ======================
+// ================= COPY =================
 function copyLink(){
-  const input = document.getElementById("shortlink");
-  input.select();
-  document.execCommand("copy");
-  alert("Copied!");
+
+const input = document.getElementById("shortlink");
+input.select();
+document.execCommand("copy");
+
+document.getElementById("msg").innerText = "Copied ✔";
+
 }
 
-// ======================
-// REDIRECT SYSTEM
-// ======================
+// ================= REDIRECT SYSTEM =================
 async function redirectSystem(){
 
-const path = window.location.pathname.replace("/","").replace("index.html","");
+const path = window.location.pathname.replace("/","");
 
-if(!path) return;
+if(!path || path==="index.html") return;
 
 const { data } = await supabase
 .from("shortlinks")
@@ -159,6 +149,51 @@ if(data){
 }
 
 redirectSystem();
+
+// ================= API SYSTEM =================
+// ?api=create&url=xxxx
+
+async function apiSystem(){
+
+const params = new URLSearchParams(window.location.search);
+
+const api = params.get("api");
+const url = params.get("url");
+
+if(api !== "create") return;
+
+if(!url){
+document.body.innerHTML = JSON.stringify({
+status:false,
+message:"URL Missing"
+});
+return;
+}
+
+const code = generateCode();
+
+const shortUrl = window.location.origin + "/" + code;
+
+// SAVE
+await supabase
+.from("shortlinks")
+.insert([{ original_url: url, short_code: code }]);
+
+// RESPONSE
+document.body.innerHTML = `
+<pre style="color:#00ffcc;padding:20px;font-size:16px;">
+${JSON.stringify({
+status:true,
+shortlink: shortUrl,
+code: code,
+url: url
+}, null, 2)}
+</pre>
+`;
+
+}
+
+apiSystem();
 
 </script>
 
