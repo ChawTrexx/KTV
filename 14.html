@@ -2,541 +2,246 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0"/>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Teen18 Premium Player</title>
+<meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
-<!-- Tailwind -->
+
+
+
+  
 <script src="https://cdn.tailwindcss.com"></script>
-
-<!-- Telegram Preview -->
-<meta property="og:type" content="website">
-
-<meta property="og:title"
-content="Teen18 Premium Player">
-
-<meta property="og:description"
-content="Watch Premium TeraBox Videos Online">
-
-<meta property="og:image"
-content="https://teen18.vercel.app/thumb.jpg">
-
-<meta property="og:url"
-content="https://teen18.vercel.app/qq.html">
-
-<meta name="twitter:card"
-content="summary_large_image">
-
-<!-- VideoJS -->
-<script type="module"
-src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js">
-</script>
-
-<!-- HLS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-
-body{
-    font-family:'Segoe UI',sans-serif;
-}
+body{font-family:'Segoe UI',sans-serif;}
 
 .bg-blur{
-    background:
-    url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=1920&auto=format&fit=crop')
-    center/cover no-repeat;
+  background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4')
+  center/cover no-repeat;
 }
 
 video{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    background:black;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:black;
 }
 
-/* 🔥 Notification */
 .notify{
-    position:fixed;
-    top:110px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(0,0,0,.75);
-    backdrop-filter:blur(20px);
-    border:1px solid rgba(255,255,255,.1);
-    color:white;
-    padding:14px 24px;
-    border-radius:18px;
-    font-weight:700;
-    z-index:9999;
-    opacity:0;
-    pointer-events:none;
-    transition:.35s;
+  position:fixed;
+  top:110px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);
+  color:white;
+  padding:14px 24px;
+  border-radius:18px;
+  font-weight:700;
+  z-index:9999;
+  opacity:0;
+  transition:.35s;
 }
-
-.notify.show{
-    opacity:1;
-    top:95px;
-}
-
+.notify.show{opacity:1;top:95px;}
 </style>
 </head>
 
-<body class="bg-black overflow-hidden h-screen w-full">
+<body class="bg-black overflow-hidden h-screen">
 
-<!-- 🔥 Notification -->
-<div id="notify" class="notify">
-Notification
+<div id="notify" class="notify">Notification</div>
+
+<div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
+<div class="fixed inset-0 bg-black/70 -z-10"></div>
+
+<!-- HEADER -->
+<div class="fixed top-4 left-1/2 -translate-x-1/2 w-[94%] h-[70px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-6 z-50">
+  <div class="text-white font-bold text-xl">TEEN<span class="text-pink-500">18</span></div>
+  <button onclick="shareVideo()" class="bg-pink-500/20 px-4 py-2 rounded-full text-white">SHARE</button>
 </div>
 
-<!-- Background -->
-<div class="fixed inset-0 bg-blur scale-110 blur-xl brightness-50 -z-20"></div>
-
-<!-- Overlay -->
-<div class="fixed inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/95 -z-10"></div>
-
-<!-- Header -->
-<div class="fixed top-4 left-1/2 -translate-x-1/2
-w-[94%] h-[78px]
-rounded-3xl
-backdrop-blur-2xl
-bg-white/5
-border border-white/10
-flex items-center justify-between
-px-6 z-50">
-
-    <!-- Logo -->
-    <div class="text-white text-2xl font-black tracking-widest">
-
-        TEEN<span class="text-pink-500">18</span>
-
-    </div>
-
-    <!-- Share -->
-    <button
-    onclick="shareVideo()"
-
-    class="px-5 py-3 rounded-full
-    bg-pink-500/20
-    border border-pink-500/50
-    text-white font-bold
-    active:scale-95 transition">
-
-    SHARE
-
-    </button>
-
+<!-- PLAYER -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94%] h-[70vh] bg-black border border-white/10 rounded-3xl overflow-hidden">
+  <video id="player" autoplay playsinline crossorigin="anonymous"></video>
 </div>
 
-<!-- Player -->
-<div class="absolute top-1/2 left-1/2
--translate-x-1/2 -translate-y-1/2
-w-[94%] max-w-[1250px]
-h-[74vh]
-rounded-[32px]
-overflow-hidden
-bg-black
-border border-white/10
-shadow-[0_0_40px_rgba(255,20,147,.25)]">
+<!-- INPUT -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3">
+  <input id="teraInput" class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
+  placeholder="Paste TeraBox Link"/>
 
-    <div class="absolute inset-0
-    rounded-[32px]
-    border border-pink-500/20
-    pointer-events-none z-10"></div>
-
-    <video-player class="w-full h-full">
-
-        <video-skin class="w-full h-full">
-
-            <video
-            id="player"
-            
-            autoplay
-            playsinline
-            crossorigin="anonymous">
-            </video>
-
-        </video-skin>
-
-    </video-player>
-
-</div>
-
-<!-- Input -->
-<div class="fixed bottom-6 left-1/2
--translate-x-1/2
-w-[94%] max-w-[900px]
-flex gap-3 z-50">
-
-    <input
-    type="text"
-    id="teraInput"
-
-    placeholder="Paste TeraBox Link Here"
-
-    class="flex-1 h-14 rounded-2xl
-    px-5
-    bg-white/10
-    border border-white/10
-    outline-none
-    text-white
-    placeholder:text-gray-400
-    backdrop-blur-xl"/>
-
-    <button
-    onclick="playVideo()"
-
-    class="w-[140px]
-    rounded-2xl
-    bg-gradient-to-r
-    from-pink-500
-    to-pink-400
-    text-white
-    font-bold
-    active:scale-95 transition">
-
-    PLAY
-
-    </button>
-
+  <button onclick="playVideo()" class="w-[140px] bg-pink-500 text-white rounded-xl">PLAY</button>
 </div>
 
 <script>
 
-// 🔥 Video
-const video =
-document.getElementById("player");
+// ================= CORE =================
+const video = document.getElementById("player");
 
-// 🔥 Current Link
 let currentTeraLink = "";
-
-// 🔥 Uploaded Thumbnail
 let uploadedThumb = "";
+let thumbnailDone = false;
 
-// 🔥 Prevent Duplicate Upload
-let thumbnailUploaded = false;
+// APIs
+const imgbbApi = "7ab5e439e36b1db27c7bb264ab7c0516";
+const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
+const chatId = "-1001966599723";
 
-// 🔥 ImgBB API
-const imgbbApi =
-"7ab5e439e36b1db27c7bb264ab7c0516";
+// Supabase
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 🔥 Telegram Bot
-const botToken =
-"6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
-
-// 🔥 Telegram Channel
-const chatId =
-"-1001966599723";
-
-// 🔥 Notification
-function showNotify(text){
-
-    const box =
-    document.getElementById("notify");
-
-    box.innerText = text;
-
-    box.classList.add("show");
-
-    setTimeout(() => {
-
-        box.classList.remove("show");
-
-    },2500);
-
+// ================= NOTIFY =================
+function showNotify(t){
+  const box = document.getElementById("notify");
+  box.innerText = t;
+  box.classList.add("show");
+  setTimeout(()=>box.classList.remove("show"),2500);
 }
 
-// 🔥 Auto Load Shared URL
-const params =
-new URLSearchParams(window.location.search);
-
-const sharedLink =
-params.get("=");
-
-if(sharedLink){
-
-    document.getElementById("teraInput").value =
-    decodeURIComponent(sharedLink);
-
-    playVideo();
-
-}
-
-// 🔥 Play Video
+// ================= PLAY VIDEO =================
 function playVideo(){
 
-    const teraLink =
-    document.getElementById("teraInput")
-    .value
-    .trim();
+  const link = document.getElementById("teraInput").value.trim();
+  if(!link) return showNotify("❌ Paste Link");
 
-    if(!teraLink){
+  currentTeraLink = link;
+  uploadedThumb = "";
+  thumbnailDone = false;
 
-        showNotify("❌ Paste TeraBox Link");
+  showNotify("🎬 Loading...");
 
-        return;
-    }
+  const url =
+  "https://1024teradownloader.in/api/video-stream?url=" +
+  encodeURIComponent(link) +
+  "&index=0&quality=360p";
 
-    // 🔥 Reset
-    uploadedThumb = "";
-    thumbnailUploaded = false;
+  if(window.hls) window.hls.destroy();
 
-    currentTeraLink =
-    teraLink;
-
-    showNotify("🎬 Loading Video...");
-
-    // 🔥 Stream URL
-    const streamUrl =
-    "https://1024teradownloader.in/api/video-stream?url="
-    + encodeURIComponent(teraLink)
-    + "&index=0&quality=360p";
-
-    // 🔥 HLS
-    if(Hls.isSupported()){
-
-        const hls =
-        new Hls();
-
-        hls.loadSource(streamUrl);
-
-        hls.attachMedia(video);
-
-    }else{
-
-        video.src =
-        streamUrl;
-
-    }
-
+  if(Hls.isSupported()){
+    window.hls = new Hls();
+    window.hls.loadSource(url);
+    window.hls.attachMedia(video);
+  } else {
+    video.src = url;
+  }
 }
 
-// 🔥 Capture Thumbnail
-video.addEventListener(
-
-"loadeddata",
-
-() => {
-
-    showNotify("📸 Generating Thumbnail...");
-
-    setTimeout(() => {
-
-        video.currentTime = 3;
-
-    },2000);
-
+// ================= THUMBNAIL =================
+video.addEventListener("loadeddata", ()=>{
+  setTimeout(()=>{
+    video.currentTime = Math.min(3, video.duration || 1);
+  },1500);
 });
 
-// 🔥 Generate Thumbnail
-video.addEventListener(
+video.addEventListener("seeked", async ()=>{
 
-"seeked",
+  if(thumbnailDone) return;
+  thumbnailDone = true;
 
-async () => {
+  try{
 
-    // 🔥 Stop Duplicate Upload
-    if(thumbnailUploaded) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
 
-    thumbnailUploaded = true;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-    try{
+    const base64 = canvas.toDataURL("image/jpeg",0.8).split(",")[1];
 
-        // 🔥 Canvas
-        const canvas =
-        document.createElement("canvas");
+    showNotify("☁ Uploading Thumbnail...");
 
-        canvas.width =
-        video.videoWidth || 1280;
+    const res = await fetch(
+      "https://api.imgbb.com/1/upload?key="+imgbbApi,
+      {
+        method:"POST",
+        body:new URLSearchParams({image:base64})
+      }
+    );
 
-        canvas.height =
-        video.videoHeight || 720;
+    const data = await res.json();
 
-        const ctx =
-        canvas.getContext("2d");
-
-        ctx.drawImage(
-
-            video,
-
-            0,
-            0,
-
-            canvas.width,
-            canvas.height
-
-        );
-
-        // 🔥 Base64
-        const base64 =
-        canvas
-        .toDataURL(
-            "image/jpeg",
-            0.8
-        )
-        .split(",")[1];
-
-        showNotify("☁ Uploading Thumbnail...");
-
-        // 🔥 Upload To ImgBB
-        const response =
-        await fetch(
-
-            "https://api.imgbb.com/1/upload?key="
-            + imgbbApi,
-
-            {
-
-                method:"POST",
-
-                body:new URLSearchParams({
-
-                    image:base64
-
-                })
-
-            }
-
-        );
-
-        const result =
-        await response.json();
-
-        // 🔥 Uploaded URL
-        if(result.success){
-
-            uploadedThumb =
-            result.data.url;
-
-            console.log(
-                "Thumbnail Uploaded:",
-                uploadedThumb
-            );
-
-            showNotify(
-                "✅ Thumbnail Uploaded"
-            );
-
-        }else{
-
-            showNotify(
-                "❌ Upload Failed"
-            );
-
-        }
-
-    }catch(e){
-
-        console.log(
-            "Thumbnail Error:",
-            e
-        );
-
-        showNotify(
-            "❌ Thumbnail Error"
-        );
-
+    if(data.success){
+      uploadedThumb = data.data.url;
+      showNotify("✅ Thumbnail Ready");
+    }else{
+      showNotify("❌ Upload Failed");
     }
 
+  }catch(e){
+    showNotify("❌ Error");
+  }
 });
 
-// 🔥 Share To Telegram
+// ================= SHARE =================
 async function shareVideo(){
 
-    if(!currentTeraLink){
+  if(!currentTeraLink) return showNotify("❌ Play First");
+  if(!uploadedThumb) return showNotify("⏳ Thumbnail Not Ready");
 
-        showNotify(
-            "❌ Play Video First"
-        );
+  try{
 
-        return;
+    showNotify("📤 Sending...");
+
+    // ===== CHECK DUPLICATE =====
+    const existing = await client
+      .from("links")
+      .select("*")
+      .eq("long_url",
+        "https://teen18.vercel.app/Q.html?=" +
+        encodeURIComponent(currentTeraLink))
+      .maybeSingle();
+
+    if(existing.data){
+      return showNotify("⚠ Already Sent");
     }
 
-    if(!uploadedThumb){
+    const code = Math.random().toString(36).slice(2,8);
 
-        showNotify(
-            "⏳ Thumbnail Generating..."
-        );
+    const shareLink =
+    "https://teen18.vercel.app/Q.html?=" +
+    encodeURIComponent(currentTeraLink);
 
-        return;
-    }
+    await client.from("links").insert([{
+      long_url: shareLink,
+      short_code: code
+    }]);
 
-    // 🔥 Share URL
-    const shareUrl =
-    "https://teen18.vercel.app/Q.html?="
-    + encodeURIComponent(currentTeraLink);
+    const shortUrl =
+    "https://short-terabox-link.vercel.app/r.html?c="+code;
 
-    // 🔥 Caption
     const caption =
-    "🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨\n"
-    + shareUrl;
+`🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨
+${shortUrl}
 
-    try{
+🎬 𝐏𝐥𝐚𝐲 𝐘𝐨𝐮𝐫 𝐋𝐢𝐧𝐤 𝐇𝐞𝐫𝐞 👇
+https://short-terabox-link.vercel.app/Q.html`;
 
-        showNotify(
-            "📤 Sending To Telegram..."
-        );
+    const res = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
+      {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          chat_id:chatId,
+          photo:uploadedThumb,
+          caption
+        })
+      }
+    );
 
-        // 🔥 Send Photo
-        const response =
-        await fetch(
+    const r = await res.json();
 
-            "https://api.telegram.org/bot"
-            + botToken
-            + "/sendPhoto",
+    if(r.ok) showNotify("✅ Sent");
+    else showNotify("❌ Telegram Error");
 
-            {
-
-                method:"POST",
-
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
-
-                body:JSON.stringify({
-
-                    chat_id:chatId,
-
-                    photo:uploadedThumb,
-
-                    caption:caption
-
-                })
-
-            }
-
-        );
-
-        const data =
-        await response.json();
-
-        console.log(data);
-
-        if(data.ok){
-
-            showNotify(
-                "✅ Sent To Telegram"
-            );
-
-        }else{
-
-            showNotify(
-                "❌ Telegram Error"
-            );
-
-        }
-
-    }catch(e){
-
-        console.log(e);
-
-        showNotify(
-            "❌ Network Error"
-        );
-
-    }
-
+  }catch(e){
+    showNotify("❌ Network Error");
+  }
 }
 
 </script>
