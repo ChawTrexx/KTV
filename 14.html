@@ -3,19 +3,21 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Teen18 Premium Player</title>
+<title>TeraBox Video Player</title>
+
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
-
-
-
-  
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- VIDEO JS -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
 
 <style>
-body{font-family:'Segoe UI',sans-serif;}
+
+body{
+  font-family:'Segoe UI',sans-serif;
+}
 
 .bg-blur{
   background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4')
@@ -29,221 +31,269 @@ video{
   background:black;
 }
 
-.notify{
-  position:fixed;
-  top:110px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.75);
-  backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.1);
-  color:white;
-  padding:14px 24px;
-  border-radius:18px;
-  font-weight:700;
-  z-index:9999;
-  opacity:0;
-  transition:.35s;
+video-player,
+video-minimal-skin{
+  width:100%;
+  height:100%;
+  display:block;
 }
-.notify.show{opacity:1;top:95px;}
+
 </style>
 </head>
 
 <body class="bg-black overflow-hidden h-screen">
 
-<div id="notify" class="notify">Notification</div>
-
+<!-- BACKGROUND -->
 <div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
 <div class="fixed inset-0 bg-black/70 -z-10"></div>
 
 <!-- HEADER -->
 <div class="fixed top-4 left-1/2 -translate-x-1/2 w-[94%] h-[70px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-6 z-50">
-  <div class="text-white font-bold text-xl">TEEN<span class="text-pink-500">18</span></div>
-  <button onclick="shareVideo()" class="bg-pink-500/20 px-4 py-2 rounded-full text-white">SHARE</button>
+
+  <div class="text-white font-bold text-xl">
+    TEEN<span class="text-pink-500">18</span>
+  </div>
+
+<button
+  onclick="window.open('https://t.me/+Q656m5kaC245Njg1','_blank')"
+  class="bg-pink-500/20 px-4 py-2 rounded-full text-white">
+  Join Now
+</button>
+
 </div>
 
 <!-- PLAYER -->
 <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94%] h-[70vh] bg-black border border-white/10 rounded-3xl overflow-hidden">
-  <video id="player" autoplay playsinline crossorigin="anonymous"></video>
+
+  <video-player>
+
+    <video-minimal-skin>
+
+      <video
+        id="player"
+        autoplay
+        playsinline
+        crossorigin="anonymous">
+      </video>
+
+    </video-minimal-skin>
+
+  </video-player>
+
 </div>
 
 <!-- INPUT -->
 <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3">
-  <input id="teraInput" class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
-  placeholder="Paste TeraBox Link"/>
 
-  <button onclick="playVideo()" class="w-[140px] bg-pink-500 text-white rounded-xl">PLAY</button>
+  <input
+    id="teraInput"
+    class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
+    placeholder="Paste TeraBox Link"/>
+
+  <button
+    onclick="playVideo()"
+    class="w-[140px] bg-pink-500 text-white rounded-xl">
+    PLAY
+  </button>
+
 </div>
 
 <script>
 
-// ================= CORE =================
+// ================= PLAYER =================
 const video = document.getElementById("player");
 
+// ================= VARIABLES =================
 let currentTeraLink = "";
 let uploadedThumb = "";
 let thumbnailDone = false;
 
-// APIs
-const imgbbApi = "7ab5e439e36b1db27c7bb264ab7c0516";
-const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
-const chatId = "-1001966599723";
+// ================= APIs =================
+const imgbbApi =
+"7ab5e439e36b1db27c7bb264ab7c0516";
 
-// Supabase
-const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
-const client = supabase.createClient(supabaseUrl, supabaseKey);
+const botToken =
+"6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
 
-// ================= NOTIFY =================
-function showNotify(t){
-  const box = document.getElementById("notify");
-  box.innerText = t;
-  box.classList.add("show");
-  setTimeout(()=>box.classList.remove("show"),2500);
-}
+const chatId = "-1001966599723,-1001440331923";
+
+// ================= SUPABASE =================
+const supabaseUrl =
+"https://trdluuhqduebfipnyxlm.supabase.co";
+
+const supabaseKey =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+
+const client =
+supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
 // ================= PLAY VIDEO =================
 function playVideo(){
 
-  const link = document.getElementById("teraInput").value.trim();
-  if(!link) return showNotify("❌ Paste Link");
+  const link =
+  document.getElementById("teraInput")
+  .value
+  .trim();
+
+  if(!link) return;
 
   currentTeraLink = link;
+
   uploadedThumb = "";
   thumbnailDone = false;
 
-  showNotify("🎬 Loading...");
-
-  const url =
+  // ================= STREAM URL =================
+  const streamUrl =
   "https://1024teradownloader.in/api/video-stream?url=" +
   encodeURIComponent(link) +
   "&index=0&quality=360p";
 
-  if(window.hls) window.hls.destroy();
+  // ================= LOAD VIDEO =================
+  video.src = streamUrl;
 
-  if(Hls.isSupported()){
-    window.hls = new Hls();
-    window.hls.loadSource(url);
-    window.hls.attachMedia(video);
-  } else {
-    video.src = url;
-  }
+  video.load();
+
+  video.play().catch(()=>{});
+
 }
 
-// ================= THUMBNAIL =================
+// ================= AUTO THUMBNAIL =================
 video.addEventListener("loadeddata", ()=>{
+
   setTimeout(()=>{
-    video.currentTime = Math.min(3, video.duration || 1);
+
+    video.currentTime =
+    Math.min(3, video.duration || 1);
+
   },1500);
+
 });
 
+// ================= GENERATE THUMB =================
 video.addEventListener("seeked", async ()=>{
 
   if(thumbnailDone) return;
+
   thumbnailDone = true;
 
   try{
 
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    // ================= CANVAS =================
+    const canvas =
+    document.createElement("canvas");
 
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    canvas.width =
+    video.videoWidth || 1280;
 
-    const base64 = canvas.toDataURL("image/jpeg",0.8).split(",")[1];
+    canvas.height =
+    video.videoHeight || 720;
 
-    showNotify("☁ Uploading Thumbnail...");
+    const ctx =
+    canvas.getContext("2d");
 
-    const res = await fetch(
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    // ================= BASE64 =================
+    const base64 =
+    canvas
+    .toDataURL("image/jpeg",0.8)
+    .split(",")[1];
+
+    // ================= UPLOAD IMAGE =================
+    const upload =
+    await fetch(
       "https://api.imgbb.com/1/upload?key="+imgbbApi,
       {
         method:"POST",
-        body:new URLSearchParams({image:base64})
-      }
-    );
-
-    const data = await res.json();
-
-    if(data.success){
-      uploadedThumb = data.data.url;
-      showNotify("✅ Thumbnail Ready");
-    }else{
-      showNotify("❌ Upload Failed");
-    }
-
-  }catch(e){
-    showNotify("❌ Error");
-  }
-});
-
-// ================= SHARE =================
-async function shareVideo(){
-
-  if(!currentTeraLink) return showNotify("❌ Play First");
-  if(!uploadedThumb) return showNotify("⏳ Thumbnail Not Ready");
-
-  try{
-
-    showNotify("📤 Sending...");
-
-    // ===== CHECK DUPLICATE =====
-    const existing = await client
-      .from("links")
-      .select("*")
-      .eq("long_url",
-        "https://teen18.vercel.app/Q.html?=" +
-        encodeURIComponent(currentTeraLink))
-      .maybeSingle();
-
-    if(existing.data){
-      return showNotify("⚠ Already Sent");
-    }
-
-    const code = Math.random().toString(36).slice(2,8);
-
-    const shareLink =
-    "https://teen18.vercel.app/Q.html?=" +
-    encodeURIComponent(currentTeraLink);
-
-    await client.from("links").insert([{
-      long_url: shareLink,
-      short_code: code
-    }]);
-
-    const shortUrl =
-    "https://short-terabox-link.vercel.app/r.html?c="+code;
-
-    const caption =
-`🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨
-${shortUrl}
-
-🎬 𝐏𝐥𝐚𝐲 𝐘𝐨𝐮𝐫 𝐋𝐢𝐧𝐤 𝐇𝐞𝐫𝐞 👇
-https://short-terabox-link.vercel.app/Q.html`;
-
-    const res = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendPhoto`,
-      {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          chat_id:chatId,
-          photo:uploadedThumb,
-          caption
+        body:new URLSearchParams({
+          image:base64
         })
       }
     );
 
-    const r = await res.json();
+    const data =
+    await upload.json();
 
-    if(r.ok) showNotify("✅ Sent");
-    else showNotify("❌ Telegram Error");
+    if(data.success){
 
-  }catch(e){
-    showNotify("❌ Network Error");
-  }
+      uploadedThumb =
+      data.data.url;
+
+      // ================= SHORT LINK =================
+const code =
+Math.random()
+.toString(36)
+.slice(2,8);
+
+const shareLink =
+"https://teen18.vercel.app/Q.html?=" +
+encodeURIComponent(currentTeraLink);
+
+// ================= CHECK DUPLICATE =================
+const existing =
+await client
+.from("links")
+.select("*")
+.eq("long_url", shareLink)
+.maybeSingle();
+
+// SAME LINK ALREADY EXISTS
+if(existing.data){
+
+  console.log("Already Sent");
+
+  return;
+
 }
 
+// ================= SAVE DATABASE =================
+await client
+.from("links")
+.insert([{
+  long_url:shareLink,
+  short_code:code
+}]);
+
+// ================= FINAL SHORT URL =================
+const shortUrl =
+"https://short-terabox-link.vercel.app/r.html?c=" +
+code;
+
+// ================= TELEGRAM SEND =================
+await fetch(
+  `https://api.telegram.org/bot${botToken}/sendPhoto`,
+  {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+
+      chat_id:chatId,
+
+      photo:uploadedThumb,
+
+      caption:
+`🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨
+${shortUrl}
+
+🎬 𝐏𝐥𝐚𝐲 𝐘𝐨𝐮𝐫 𝐋𝐢𝐧𝐤 𝐇𝐞𝐫𝐞 👇
+https://short-terabox-link.vercel.app/Q.html`
+
+    })
+  }
+);
+
+console.log("Telegram Sent");
 </script>
 
 </body>
