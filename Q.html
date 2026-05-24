@@ -12,6 +12,9 @@
 
 <!-- VIDEO JS -->
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+  
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
 
@@ -83,20 +86,50 @@ video-minimal-skin{
 </div>
 
 <!-- INPUT -->
-<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3">
 
-  <input
-    id="teraInput"
-    class="flex-1 h-14 rounded-xl px-4 bg-white/10 text-white outline-none"
-    placeholder="Paste TeraBox Link"/>
 
+  
+<!-- INPUT -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3 z-50">
+
+  <div class="flex-1 h-14 bg-[#1a1a1a] border border-white/10 rounded-2xl flex items-center relative overflow-hidden shadow-xl">
+
+    <!-- Paste Button Left Side -->
+    <button
+      onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
+      class="shrink-0 w-[44px] h-[44px] ml-1.5 rounded-[14px] bg-[#2948ff] text-white flex items-center justify-center active:scale-95 transition-all duration-200 shadow-lg">
+      
+      <i class="fa-duotone fa-solid fa-paste"></i>
+
+    </button>
+
+    <!-- Input -->
+    <input
+      id="teraInput"
+      type="text"
+      class="flex-1 min-w-0 h-full bg-transparent px-4 text-white placeholder:text-white/35 outline-none"
+      placeholder="Paste your TeraBox link"/>
+
+  </div>
+
+  <!-- Play Button -->
   <button
     onclick="playVideo()"
-    class="w-[140px] bg-pink-500 text-white rounded-xl">
+    class="w-[90px] h-14 shrink-0 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-95 transition-all duration-200">
     PLAY
   </button>
 
 </div>
+  
+
+
+
+
+
+
+
+
+  
 
 <script>
 
