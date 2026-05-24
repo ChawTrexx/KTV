@@ -110,7 +110,7 @@ let thumbnailDone = false;
 
 // ================= APIs =================
 const imgbbApi =
-"7ab5e439e36b1db27c7bb264ab7c0516";
+"1c5c28965eb8cdcc5e2e78b2298182bf";
 
 const botToken =
 "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
@@ -208,25 +208,42 @@ video.addEventListener("seeked", async ()=>{
     .toDataURL("image/jpeg",0.8)
     .split(",")[1];
 
+
+
+
+
+    
+
     // ================= UPLOAD IMAGE =================
     const upload =
-    await fetch(
-      "https://api.imgbb.com/1/upload?key="+imgbbApi,
-      {
-        method:"POST",
-        body:new URLSearchParams({
-          image:base64
-        })
-      }
-    );
+await fetch(
+  "https://api.imgbb.com/1/upload?key="+imgbbApi,
+  {
+    method:"POST",
+    body:new URLSearchParams({
+      image:base64,
+      expiration:"60"
+    })
+  }
+);
 
-    const data =
-    await upload.json();
+const data =
+await upload.json();
 
-    if(data.success){
+if(data.success){
 
-      uploadedThumb =
-      data.data.url;
+  uploadedThumb =
+  data.data.url;
+
+}
+
+
+
+
+
+
+
+      
 
       // ================= SHORT LINK =================
 const code =
