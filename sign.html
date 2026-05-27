@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Premium Traffic Signs</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+    font-family:'Poppins',sans-serif;
+}
+
+</style>
+
+</head>
+
+<body class="bg-slate-100 min-h-screen p-2 md:p-6">
+
+<div class="max-w-7xl mx-auto">
+
+    <!-- Header -->
+
+    <div class="text-center mb-6 md:mb-10">
+
+        <h1 class="text-3xl md:text-6xl font-bold text-red-600 tracking-wide drop-shadow-lg">
+            TRAFFIC SIGNS
+        </h1>
+
+        <p class="text-slate-500 text-sm md:text-lg mt-2">
+            Premium Traffic Sign Collection
+        </p>
+
+    </div>
+
+    <!-- Upload Box -->
+
+    <div class="bg-white rounded-3xl shadow-xl p-4 md:p-8 mb-6 md:mb-10">
+
+        <div class="grid md:grid-cols-2 gap-4 md:gap-5">
+
+            <!-- Sign Name -->
+
+            <div>
+
+                <label class="font-semibold text-slate-700 block mb-2 text-sm md:text-base">
+                    Sign Name
+                </label>
+
+                <input 
+                    type="text"
+                    id="signName"
+                    placeholder="Enter sign name"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 text-sm md:text-base"
+                >
+
+            </div>
+
+            <!-- Upload -->
+
+            <div>
+
+                <label class="font-semibold text-slate-700 block mb-2 text-sm md:text-base">
+                    Upload Image
+                </label>
+
+                <input 
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2 md:p-3 text-sm"
+                >
+
+            </div>
+
+        </div>
+
+        <!-- Button -->
+
+        <button 
+            onclick="saveData()"
+            class="w-full mt-5 bg-gradient-to-r from-red-500 to-orange-500 text-white py-3 md:py-4 rounded-2xl text-base md:text-lg font-semibold shadow-lg hover:scale-[1.01] transition-all duration-300"
+        >
+            Upload Sign
+        </button>
+
+    </div>
+
+    <!-- Gallery -->
+
+    <div 
+        id="gallery"
+        class="grid grid-cols-3 gap-2 md:gap-5"
+    ></div>
+
+    <!-- Empty -->
+
+    <div 
+        id="emptyText"
+        class="text-center text-slate-400 text-base md:text-xl mt-16"
+    >
+        No signs uploaded yet
+    </div>
+
+</div>
+
+<script>
+
+const gallery = document.getElementById("gallery");
+
+const emptyText = document.getElementById("emptyText");
+
+function loadData(){
+
+    let data = JSON.parse(localStorage.getItem("trafficSigns")) || [];
+
+    gallery.innerHTML = "";
+
+    if(data.length > 0){
+
+        emptyText.classList.add("hidden");
+
+    }else{
+
+        emptyText.classList.remove("hidden");
+
+    }
+
+    data.reverse().forEach((item,index)=>{
+
+        gallery.innerHTML += `
+
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-md md:shadow-xl overflow-hidden hover:-translate-y-1 transition-all duration-300 relative">
+
+            <!-- Delete Button -->
+
+            <button 
+                onclick="deleteItem(${index})"
+                class="absolute top-1 right-1 md:top-2 md:right-2 bg-red-500 hover:bg-red-600 text-white w-5 h-5 md:w-7 md:h-7 rounded-full text-xs md:text-sm flex items-center justify-center shadow-lg z-10"
+            >
+                ×
+            </button>
+
+            <!-- Image -->
+
+            <div class="h-28 md:h-56 bg-slate-50 flex items-center justify-center p-2 md:p-4">
+
+                <img 
+                    src="${item.image}"
+                    class="h-full w-full object-contain"
+                >
+
+            </div>
+
+            <!-- Name -->
+
+            <div class="p-2 md:p-4 text-center">
+
+                <h2 class="font-semibold text-[11px] md:text-lg text-slate-800 leading-4 md:leading-6 break-words">
+                    ${item.name}
+                </h2>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+function saveData(){
+
+    let name = document.getElementById("signName").value.trim();
+
+    let file = document.getElementById("imageInput").files[0];
+
+    if(name === "" || !file){
+
+        alert("Please fill all fields");
+
+        return;
+
+    }
+
+    let reader = new FileReader();
+
+    reader.onload = function(e){
+
+        let imageData = e.target.result;
+
+        let data = JSON.parse(localStorage.getItem("trafficSigns")) || [];
+
+        data.push({
+
+            name:name,
+            image:imageData
+
+        });
+
+        localStorage.setItem(
+
+            "trafficSigns",
+
+            JSON.stringify(data)
+
+        );
+
+        document.getElementById("signName").value = "";
+
+        document.getElementById("imageInput").value = "";
+
+        loadData();
+
+    }
+
+    reader.readAsDataURL(file);
+
+}
+
+function deleteItem(index){
+
+    let data = JSON.parse(localStorage.getItem("trafficSigns")) || [];
+
+    data.reverse();
+
+    data.splice(index,1);
+
+    data.reverse();
+
+    localStorage.setItem(
+
+        "trafficSigns",
+
+        JSON.stringify(data)
+
+    );
+
+    loadData();
+
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
