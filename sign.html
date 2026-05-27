@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Premium Traffic Signs</title>
+<title>Traffic Signs</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -20,35 +20,66 @@ body{
 
 </head>
 
-<body class="bg-slate-100 min-h-screen p-2 md:p-6">
+<body class="bg-slate-100 min-h-screen p-2 md:p-6 overflow-x-hidden">
 
 <div class="max-w-7xl mx-auto">
 
     <!-- Header -->
 
-    <div class="text-center mb-6 md:mb-10">
+    <div class="flex items-center justify-between mb-6 md:mb-10">
 
-        <h1 class="text-3xl md:text-6xl font-bold text-red-600 tracking-wide drop-shadow-lg">
-            TRAFFIC SIGNS
-        </h1>
+        <!-- Title -->
 
-        <p class="text-slate-500 text-sm md:text-lg mt-2">
-            Premium Traffic Sign Collection
-        </p>
+        <div>
+
+            <h1 class="text-3xl md:text-6xl font-bold text-red-600 tracking-wide drop-shadow-lg">
+                TRAFFIC SIGNS
+            </h1>
+
+        </div>
+
+        <!-- Upload Button Right -->
+
+        <button 
+            onclick="toggleUpload()"
+            class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-2xl shadow-xl text-xs md:text-base font-semibold"
+        >
+            Upload
+        </button>
 
     </div>
 
-    <!-- Upload Box -->
+    <!-- Upload Modal -->
 
-    <div class="bg-white rounded-3xl shadow-xl p-4 md:p-8 mb-6 md:mb-10">
+    <div 
+        id="uploadModal"
+        class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4"
+    >
 
-        <div class="grid md:grid-cols-2 gap-4 md:gap-5">
+        <!-- Modal -->
+
+        <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl p-5 md:p-8 relative">
+
+            <!-- Close -->
+
+            <button 
+                onclick="toggleUpload()"
+                class="absolute top-3 right-3 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-lg"
+            >
+                ×
+            </button>
+
+            <!-- Title -->
+
+            <h2 class="text-2xl md:text-3xl font-bold text-center text-slate-800 mb-6">
+                Upload Sign
+            </h2>
 
             <!-- Sign Name -->
 
-            <div>
+            <div class="mb-4">
 
-                <label class="font-semibold text-slate-700 block mb-2 text-sm md:text-base">
+                <label class="font-semibold text-slate-700 block mb-2">
                     Sign Name
                 </label>
 
@@ -56,16 +87,16 @@ body{
                     type="text"
                     id="signName"
                     placeholder="Enter sign name"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 md:p-4 outline-none focus:ring-2 focus:ring-red-400 text-sm md:text-base"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none focus:ring-2 focus:ring-red-400"
                 >
 
             </div>
 
             <!-- Upload -->
 
-            <div>
+            <div class="mb-5">
 
-                <label class="font-semibold text-slate-700 block mb-2 text-sm md:text-base">
+                <label class="font-semibold text-slate-700 block mb-2">
                     Upload Image
                 </label>
 
@@ -73,21 +104,21 @@ body{
                     type="file"
                     id="imageInput"
                     accept="image/*"
-                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2 md:p-3 text-sm"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3"
                 >
 
             </div>
 
+            <!-- Upload Button -->
+
+            <button 
+                onclick="saveData()"
+                class="w-full bg-gradient-to-r from-red-500 to-orange-500 text-white py-4 rounded-2xl text-lg font-semibold shadow-lg"
+            >
+                Upload Now
+            </button>
+
         </div>
-
-        <!-- Button -->
-
-        <button 
-            onclick="saveData()"
-            class="w-full mt-5 bg-gradient-to-r from-red-500 to-orange-500 text-white py-3 md:py-4 rounded-2xl text-base md:text-lg font-semibold shadow-lg hover:scale-[1.01] transition-all duration-300"
-        >
-            Upload Sign
-        </button>
 
     </div>
 
@@ -115,6 +146,16 @@ const gallery = document.getElementById("gallery");
 
 const emptyText = document.getElementById("emptyText");
 
+const uploadModal = document.getElementById("uploadModal");
+
+function toggleUpload(){
+
+    uploadModal.classList.toggle("hidden");
+
+    uploadModal.classList.toggle("flex");
+
+}
+
 function loadData(){
 
     let data = JSON.parse(localStorage.getItem("trafficSigns")) || [];
@@ -137,7 +178,7 @@ function loadData(){
 
         <div class="bg-white rounded-2xl md:rounded-3xl shadow-md md:shadow-xl overflow-hidden hover:-translate-y-1 transition-all duration-300 relative">
 
-            <!-- Delete Button -->
+            <!-- Delete -->
 
             <button 
                 onclick="deleteItem(${index})"
@@ -215,6 +256,8 @@ function saveData(){
         document.getElementById("signName").value = "";
 
         document.getElementById("imageInput").value = "";
+
+        toggleUpload();
 
         loadData();
 
