@@ -190,35 +190,45 @@ supabase.createClient(
 );
 
 // ================= PLAY VIDEO =================
-function playVideo(){
+function playVideo() {
 
-  const link = document.getElementById("teraInput").value.trim();
+    const link = document.getElementById("teraInput").value.trim();
+    if (!link) return;
 
-  if(!link) return;
+    currentTeraLink = link;
+    uploadedThumb = "";
+    thumbnailDone = false;
 
-  currentTeraLink = link;
-  uploadedThumb = "";
-  thumbnailDone = false;
+    const streamUrl =
+        "https://1024teradownloader.in/api/video-stream?url=" +
+        encodeURIComponent(link) +
+        "&index=0&quality=360p";
 
-  const streamUrl =
-  "https://1024teradownloader.in/api/video-stream?url=" +
-  encodeURIComponent(link) +
-  "&index=0&quality=360p";
+    video.pause();
+    video.removeAttribute("src");
 
-  video.src = streamUrl;
-  video.load();
+    video.muted = true;
+    video.autoplay = true;
+    video.playsInline = true;
 
-  video.muted = true;
-  video.playsInline = true;
+    video.src = streamUrl;
+    video.load();
 
-  video.play()
-  .catch(() => {
-      video.addEventListener("canplay", () => {
-          video.play().catch(console.error);
-      }, { once:true });
-  });
+    video.play().catch(console.error);
+}
 
-} // <-- Function yahin END hoga
+  window.addEventListener("DOMContentLoaded", () => {
+
+    if (location.search.startsWith("?=")) {
+
+        const link = decodeURIComponent(location.search.substring(2));
+
+        document.getElementById("teraInput").value = link;
+
+        playVideo();
+    }
+
+});
 
 // ================= AUTO PLAY FROM URL =================
 window.addEventListener("DOMContentLoaded", () => {
