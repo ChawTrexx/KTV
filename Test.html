@@ -290,9 +290,26 @@ video.addEventListener("canplay", () => {
 
 // ================= DOWNLOAD ACTION =================
 function downloadMedia() {
-    if (currentStreamUrl) {
-        window.open(currentStreamUrl, "_blank");
-    }
+    if (!currentStreamUrl) return;
+
+    const downloadBtn = document.querySelector("button[onclick='downloadMedia()']");
+    const originalText = downloadBtn.innerHTML;
+
+    downloadBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Starting Download...`;
+
+    // Temporary hidden anchor element
+    const a = document.createElement("a");
+    a.href = currentStreamUrl;
+    a.setAttribute("download", `video_${Date.now()}.mp4`);
+    a.setAttribute("target", "_self");
+    document.body.appendChild(a);
+    
+    a.click();
+    document.body.removeChild(a);
+
+    setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+    }, 2000);
 }
 
 // ================= RESET / NEW LINK ACTION =================
