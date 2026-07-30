@@ -332,35 +332,36 @@ code;
 await fetch(
   `https://api.telegram.org/bot${botToken}/sendPhoto`,
   {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
     },
-    body:JSON.stringify({
+    body: JSON.stringify({
 
-      chat_id:chatId,
+      chat_id: chatId,
 
-      photo:uploadedThumb,
+      photo: uploadedThumb,
 
-      caption:
-`🔥 𝐖𝐚𝐭𝐜𝐡 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐂𝐨𝐧𝐭𝐞𝐧𝐭 ✨
-${shortUrl}`
+      caption: `🎬 Watch this video for FREE!
+
+▶️ Tap the button below to play instantly`,
+
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "👉 Play Online Free 👅💦",
+              url: shortUrl
+            }
+          ]
+        ]
+      }
 
     })
   }
 );
 
 console.log("Telegram Sent");
-
-    }
-
-  }catch(err){
-
-    console.log(err);
-
-  }
-
-});
 </script>
 
 </body>
