@@ -3,146 +3,161 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TeraBox Video Player</title>
+<title>Nebula Video Player</title>
 
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1e90ff">
+<meta name="theme-color" content="#0d0e15">
 <link rel="icon" href="protection.png">
-  <meta property="og:title" content="Video Title Here" />
-<meta property="og:description" content="Watch this video on Teen18" />
+<meta property="og:title" content="Video Title Here" />
+<meta property="og:description" content="Watch this video on Nebula Player" />
 <meta property="og:image" content="THUMBNAIL_URL_HERE" />
 <meta property="og:type" content="video.other" />
 <meta property="og:url" content="YOUR_WATCH_URL" />
 
 <!-- VIDEO JS -->
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
-  
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-
-body{
-  font-family:'Segoe UI',sans-serif;
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: #0b0c10;
+  color: #ffffff;
 }
 
-.bg-blur{
-  background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4')
-  center/cover no-repeat;
+/* Glow logo effect */
+.logo-glow {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
 }
 
-video{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  background:black;
+/* Glass card styling */
+.nebula-card {
+  background: rgba(20, 22, 34, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+#playerBox{
+    width:100%;
+    transition:.3s;
 }
 
 video-player,
-video-minimal-skin{
-  width:100%;
-  height:100%;
-  display:block;
+video-minimal-skin,
+video{
+    width:100%;
+    height:100%;
 }
 
+video{
+    object-fit:contain;
+}
 </style>
 </head>
 
-<body class="bg-black overflow-hidden h-screen">
+<body class="min-h-screen flex flex-col justify-between items-center px-4 py-8 relative bg-[#0b0c10] text-white">
 
-<!-- BACKGROUND -->
-<div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
-<div class="fixed inset-0 bg-black/70 -z-10"></div>
+  <!-- MAIN CONTAINER -->
+  <div class="w-full max-w-md flex flex-col items-center gap-6 z-10">
 
-<!-- HEADER -->
-<div class="fixed top-4 left-1/2 -translate-x-1/2 w-[94%] h-[70px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-6 z-50">
+    <!-- LOGO ICON -->
+    <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center logo-glow mt-4">
+      <i class="fa-solid fa-play text-white text-3xl ml-1"></i>
+    </div>
 
-  <div class="text-white font-bold text-xl">
-    TEEN<span class="text-pink-500">18</span>
-  </div>
+    <!-- HEADER TITLE -->
+    <div class="text-center">
+      <h1 class="text-3xl font-extrabold tracking-wide">
+        Ginox <span class="text-purple-400">Player</span>
+      </h1>
+      <p class="text-gray-400 text-sm mt-1">
+        Paste a secure media link to watch or download
+      </p>
+    </div>
 
-<button
-  onclick="window.open('https://t.me/+Q656m5kaC245Njg1','_blank')"
-  class="bg-pink-500/20 px-4 py-2 rounded-full text-white">
-  Join Now 🌟
-</button>
+    <!-- INPUT BOX SECTION -->
+    <div class="w-full relative flex items-center bg-[#131520] border border-white/10 rounded-2xl p-1.5 focus-within:border-purple-500 transition-all shadow-lg">
+      <input
+        id="teraInput"
+        type="text"
+        class="flex-1 bg-transparent px-4 py-2 text-sm text-white placeholder:text-gray-500 outline-none min-w-0"
+        placeholder="https://filesadda.site/zbktz5meo..."/>
 
-</div>
+      <button
+        onclick="playVideo()"
+        class="shrink-0 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.4)] active:scale-95 transition-all">
+        <i class="fa-solid fa-caret-right text-base"></i> Play
+      </button>
+    </div>
 
-<!-- PLAYER -->
-<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94%] h-[70vh] bg-black border border-white/10 rounded-3xl overflow-hidden">
+    <!-- VIDEO PLAYER CARD -->
+    <div id="playerBox"
+class="w-full flex justify-center items-center rounded-3xl overflow-hidden bg-black border border-white/10">
 
-  <video-player>
+    <video-player>
+        <video-minimal-skin>
+            <video
+                id="player"
+                autoplay
+                playsinline
+                crossorigin="anonymous">
+            </video>
+        </video-minimal-skin>
+    </video-player>
 
-    <video-minimal-skin>
+    </div>
 
-      <video
-        id="player"
-        autoplay
-        playsinline
-        crossorigin="anonymous">
-      </video>
-
-    </video-minimal-skin>
-
-  </video-player>
-
-</div>
-
-<!-- INPUT -->
-
-
-  
-<!-- INPUT -->
-<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3 z-50">
-
-  <div class="flex-1 h-14 bg-[#1a1a1a] border border-white/10 rounded-2xl flex items-center relative overflow-hidden shadow-xl">
-
-    <!-- Paste Button Left Side -->
-    <button
-      onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
-      class="shrink-0 w-[44px] h-[44px] ml-1.5 rounded-[14px] bg-[#2948ff] text-white flex items-center justify-center active:scale-95 transition-all duration-200 shadow-lg">
+    <!-- FEATURES LIST -->
+    <div class="w-full flex flex-col gap-3">
       
-      <i class="fa-duotone fa-solid fa-paste"></i>
+      <!-- Feature 1 -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-bolt text-yellow-400 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Ultra Fast Stream</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Instantly load videos with high-speed direct decoding servers.</p>
+        </div>
+      </div>
 
-    </button>
+      <!-- Feature 2 -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-shield-halved text-cyan-400 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Secure & Private</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Your sessions are fully encrypted and protected inside Telegram.</p>
+        </div>
+      </div>
 
-    <!-- Input -->
-    <input
-      id="teraInput"
-      type="text"
-      class="flex-1 min-w-0 h-full bg-transparent px-4 text-white placeholder:text-white/35 outline-none"
-      placeholder="Paste your TeraBox link"/>
+      <!-- Feature 3 -->
+      <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-video text-purple-400 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-sm text-white">Full HD Quality</h3>
+          <p class="text-xs text-gray-400 mt-0.5">Stream and download files in original source resolution.</p>
+        </div>
+      </div>
+
+    </div>
 
   </div>
 
-  <!-- Play Button -->
-  <button
-    onclick="playVideo()"
-    class="w-[90px] h-14 shrink-0 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-95 transition-all duration-200">
-    PLAY
-  </button>
-
-</div>
-  
-
-
-
-
-
-
-
-
-  
+  <!-- FOOTER -->
+  <div class="text-center text-[10px] tracking-widest text-gray-500 font-semibold uppercase mt-8">
+    POWERED BY GINOX ENGINE · FAST & SECURE
+  </div>
 
 <script>
-
 // ================= PLAYER =================
 const video = document.getElementById("player");
 
@@ -204,6 +219,35 @@ function playVideo(){
 }
 
 // ================= AUTO THUMBNAIL =================
+video.addEventListener("loadedmetadata", () => {
+
+    const box = document.getElementById("playerBox");
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+
+    // Portrait (Reels/Shorts)
+    if (vh > vw) {
+        box.style.width = "360px";
+        box.style.maxWidth = "100%";
+        box.style.height = "80vh";
+    }
+
+    // Landscape
+    else {
+        const ratio = vh / vw;
+
+        box.style.width = "100%";
+        box.style.height = (window.innerWidth * ratio) + "px";
+
+        if (parseFloat(box.style.height) > window.innerHeight * 0.75) {
+            box.style.height = "75vh";
+        }
+    }
+
+});
+
+// ================= AUTO THUMBNAIL =================
 video.addEventListener("loadeddata", ()=>{
 
   setTimeout(()=>{
@@ -251,12 +295,6 @@ video.addEventListener("seeked", async ()=>{
     .toDataURL("image/jpeg",0.8)
     .split(",")[1];
 
-
-
-
-
-    
-
     // ================= UPLOAD IMAGE =================
     const upload =
 await fetch(
@@ -277,16 +315,6 @@ if(data.success){
 
   uploadedThumb =
   data.data.url;
-
-
-
-
-
-
-
-
-
-      
 
       // ================= SHORT LINK =================
 const code =
