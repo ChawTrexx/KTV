@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Terabox Video Player</title>
+<title>Nebula Video Player</title>
 
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
@@ -74,7 +74,7 @@ video {
     <!-- HEADER TITLE -->
     <div class="text-center">
       <h1 class="text-3xl font-extrabold tracking-wide">
-        Ginox <span class="text-purple-400">Player</span>
+        Nebula <span class="text-purple-400">Player</span>
       </h1>
       <p class="text-gray-400 text-sm mt-1">
         Paste a secure media link to watch or download
@@ -96,8 +96,8 @@ video {
       </button>
     </div>
 
-    <!-- LOADING CARD (Hidden by default) -->
-    <div id="loaderCard" style="display: none !important;" class="w-full nebula-card rounded-3xl p-8 flex-col items-center justify-center gap-4 border border-purple-500/20 shadow-xl">
+    <!-- LOADING CARD (Strict Inline Display None by default) -->
+    <div id="loaderCard" style="display: none !important;" class="w-full nebula-card rounded-3xl p-8 flex flex-col items-center justify-center gap-4 border border-purple-500/20 shadow-xl">
       <div class="relative flex items-center justify-center">
         <div class="w-12 h-12 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin"></div>
         <i class="fa-solid fa-circle-play text-purple-400 absolute text-sm animate-pulse"></i>
@@ -108,23 +108,43 @@ video {
       </div>
     </div>
 
-    <!-- VIDEO PLAYER CARD (Strict Inline Display None by default) -->
-    <div id="playerBox" style="display: none !important;" class="rounded-3xl overflow-hidden bg-black border border-white/10">
-      <video-player>
-        <video-minimal-skin>
-          <video
-            id="player"
-            autoplay
-            muted
-            playsinline
-            crossorigin="anonymous">
-          </video>
-        </video-minimal-skin>
-      </video-player>
+    <!-- VIDEO PLAYER & ACTION BUTTONS CONTAINER (Strict Inline Display None by default) -->
+    <div id="mediaContainer" style="display: none !important;" class="w-full flex-col gap-4">
+      
+      <!-- Video Player Card -->
+      <div id="playerBox" class="rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+        <video-player>
+          <video-minimal-skin>
+            <video
+              id="player"
+              autoplay
+              muted
+              playsinline
+              crossorigin="anonymous">
+            </video>
+          </video-minimal-skin>
+        </video-player>
+      </div>
+
+      <!-- Action Buttons (Download & New Link) -->
+      <div class="w-full flex items-center gap-3">
+        <button
+          onclick="downloadMedia()"
+          class="flex-1 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95 transition-all">
+          <i class="fa-solid fa-cloud-arrow-down text-lg"></i> Download
+        </button>
+
+        <button
+          onclick="resetPlayer()"
+          class="flex-1 py-3.5 px-4 rounded-2xl bg-[#1b1c28] border border-white/10 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#232536] active:scale-95 transition-all">
+          <i class="fa-solid fa-arrows-rotate text-sm text-gray-300"></i> New Link
+        </button>
+      </div>
+
     </div>
 
     <!-- FEATURES LIST -->
-    <div class="w-full flex flex-col gap-3">
+    <div id="featuresList" class="w-full flex flex-col gap-3">
       
       <!-- Feature 1 -->
       <div class="w-full nebula-card rounded-2xl p-4 flex items-center gap-4">
@@ -165,17 +185,19 @@ video {
 
   <!-- FOOTER -->
   <div class="text-center text-[10px] tracking-widest text-gray-500 font-semibold uppercase mt-8">
-    POWERED BY GINOX ENGINE · FAST & SECURE
+    POWERED BY NEBULA ENGINE · FAST & SECURE
   </div>
 
 <script>
 // ================= PLAYER & UI =================
 const video = document.getElementById("player");
 const playerBox = document.getElementById("playerBox");
+const mediaContainer = document.getElementById("mediaContainer");
 const loaderCard = document.getElementById("loaderCard");
 
 // ================= VARIABLES =================
 let currentTeraLink = "";
+let currentStreamUrl = "";
 let uploadedThumb = "";
 let thumbnailDone = false;
 
@@ -195,15 +217,15 @@ function playVideo() {
     const link = document.getElementById("teraInput").value.trim();
     if (!link) return;
 
-    // Player Box hide karo aur Loader dikhao
-    playerBox.style.setProperty("display", "none", "important");
+    // Player Box Hide Karo aur Loader Display Karo
+    mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "flex", "important");
 
     currentTeraLink = link;
     uploadedThumb = "";
     thumbnailDone = false;
 
-    const streamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
+    currentStreamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
         encodeURIComponent(link) +
         "&index=0&quality=360p";
 
@@ -214,7 +236,7 @@ function playVideo() {
     video.autoplay = true;
     video.playsInline = true;
 
-    video.src = streamUrl;
+    video.src = currentStreamUrl;
     video.load();
 }
 
@@ -238,10 +260,10 @@ video.addEventListener("canplay", () => {
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 360;
 
-    // Loader hide kardo
+    // Loader Hide Kardo
     loaderCard.style.setProperty("display", "none", "important");
 
-    // Dynamic Sizing Logic
+    // Dynamic Aspect Ratio and Height
     if (vh > vw) {
         playerBox.style.width = "100%";
         playerBox.style.maxWidth = "360px";
@@ -261,10 +283,26 @@ video.addEventListener("canplay", () => {
         playerBox.style.aspectRatio = `${vw} / ${vh}`;
     }
 
-    // Player Box dikhao aur Play shuru karo
-    playerBox.style.setProperty("display", "flex", "important");
+    // Container showing player & action buttons
+    mediaContainer.style.setProperty("display", "flex", "important");
     video.play().catch(err => console.log("Autoplay issue/blocked:", err));
 });
+
+// ================= DOWNLOAD ACTION =================
+function downloadMedia() {
+    if (currentStreamUrl) {
+        window.open(currentStreamUrl, "_blank");
+    }
+}
+
+// ================= RESET / NEW LINK ACTION =================
+function resetPlayer() {
+    video.pause();
+    video.removeAttribute("src");
+    document.getElementById("teraInput").value = "";
+    mediaContainer.style.setProperty("display", "none", "important");
+    loaderCard.style.setProperty("display", "none", "important");
+}
 
 // ================= AUTO SEEK FOR THUMBNAIL =================
 video.addEventListener("loadeddata", () => {
