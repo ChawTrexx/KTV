@@ -219,6 +219,30 @@ function playVideo(){
 
 }
 
+
+  // ================= AUTO PLAY FROM URL =================
+window.addEventListener("DOMContentLoaded", () => {
+
+    let link = "";
+
+    if (location.search.startsWith("?=")) {
+        link = decodeURIComponent(location.search.substring(2));
+    } else {
+        const params = new URLSearchParams(location.search);
+        link = params.get("") || "";
+    }
+
+    if (link) {
+        document.getElementById("teraInput").value = link;
+
+        currentTeraLink = link;
+
+        setTimeout(() => {
+            playVideo();
+        }, 300);
+    }
+
+});
 // ================= AUTO THUMBNAIL =================
 video.addEventListener("loadedmetadata", () => {
 
