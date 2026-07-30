@@ -210,14 +210,26 @@ function playVideo(){
   encodeURIComponent(link) +
   "&index=0&quality=360p";
 
-  // ================= LOAD VIDEO =================
-  video.src = streamUrl;
+// ================= LOAD VIDEO =================
+video.src = streamUrl;
 
-  video.load();
+video.load();
 
-  video.play().catch(()=>{});
+video.muted = true;      // Autoplay allow
+video.playsInline = true;
 
-}
+video.play()
+.then(() => {
+    console.log("Video Playing");
+})
+.catch(err => {
+    console.log("Autoplay Failed:", err);
+
+    // Metadata load hone ke baad dobara try
+    video.addEventListener("canplay", () => {
+        video.play().catch(console.error);
+    }, { once: true });
+});
 
 
   // ================= AUTO PLAY FROM URL =================
