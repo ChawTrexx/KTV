@@ -148,7 +148,7 @@ video {
 
     </div>
 
-    <!-- FEATURES LIST (Hide ho jayega jab video play hoga) -->
+    <!-- FEATURES LIST (Loading par dikhega, video ready hone par hide ho jayega) -->
     <div id="featuresList" class="w-full flex flex-col gap-3">
       
       <!-- Feature 1 -->
@@ -230,9 +230,9 @@ function playVideo() {
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "flex", "important");
 
-    // Features List Hide Kardo
+    // Loading ke dauran Features List visible rahegi
     if (featuresList) {
-        featuresList.style.setProperty("display", "none", "important");
+        featuresList.style.removeProperty("display");
     }
 
     currentTeraLink = link;
@@ -269,7 +269,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ================= SHOW PLAYER & HIDE LOADER ON READY =================
+// ================= SHOW PLAYER & HIDE LOADER/FEATURES ON READY =================
 video.addEventListener("canplay", () => {
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 360;
@@ -277,7 +277,7 @@ video.addEventListener("canplay", () => {
     // Loader Hide Kardo
     loaderCard.style.setProperty("display", "none", "important");
 
-    // Features List ensure hidden
+    // Video ready ho gaya, ab Features List HIDE kardo
     if (featuresList) {
         featuresList.style.setProperty("display", "none", "important");
     }
