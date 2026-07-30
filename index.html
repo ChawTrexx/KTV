@@ -64,12 +64,12 @@ video {
   user-select: none;
 }
 
-/* Disabled hone par input container ka background/border fully normal rahega */
+/* Extra Bright Styling for Disabled State */
 input:disabled {
   cursor: not-allowed !important;
   opacity: 1 !important;
-  color: #6b7280 !important; /* Screenshot ke exact dim grey text match ke liye */
-  -webkit-text-fill-color: #6b7280 !important;
+  color: #d1d5db !important; /* Bright readable text color */
+  -webkit-text-fill-color: #d1d5db !important;
 }
 </style>
 </head>
@@ -100,8 +100,8 @@ input:disabled {
       </div>
     </div>
 
-    <!-- INPUT BOX SECTION -->
-    <div id="inputBoxWrapper" class="w-full bg-[#0e101a] border border-purple-500/40 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/80 transition-all">
+    <!-- INPUT BOX SECTION WITH BRIGHT PURPLE GLOW BORDER -->
+    <div id="inputBoxWrapper" class="w-full bg-[#0c0d16] border-2 border-[#8b5cf6] rounded-2xl p-1.5 flex items-center shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all">
       <input
         id="teraInput"
         type="text"
@@ -111,7 +111,7 @@ input:disabled {
       <button
         id="playBtn"
         onclick="playVideo()"
-        class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00b4db] to-[#0083b0] hover:from-[#00c6ff] hover:to-[#0072ff] text-white font-semibold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(0,180,219,0.3)] active:scale-95 transition-all">
+        class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00c6ff] to-[#0072ff] hover:from-[#00d2ff] hover:to-[#0088ff] text-white font-bold text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(0,198,255,0.5)] active:scale-95 transition-all">
         <i class="fa-solid fa-caret-right text-base"></i> Play
       </button>
     </div>
@@ -248,7 +248,7 @@ function playVideo() {
     const link = teraInput.value.trim();
     if (!link) return;
 
-    // Disable input box & play button without dimming Play Button's background opacity
+    // Disable input box & play button
     teraInput.disabled = true;
     playBtn.disabled = true;
     playBtn.classList.add("pointer-events-none");
