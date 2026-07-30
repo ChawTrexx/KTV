@@ -44,9 +44,6 @@ body {
 
 #playerBox {
   width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   margin: 0 auto;
   transition: all 0.3s ease-in-out;
 }
@@ -99,8 +96,8 @@ video {
       </button>
     </div>
 
-    <!-- VIDEO PLAYER CARD (By default 'hidden' rahega jab tak video load na ho) -->
-    <div id="playerBox" class="hidden rounded-3xl overflow-hidden bg-black border border-white/10">
+    <!-- VIDEO PLAYER CARD (Strict Inline Display None) -->
+    <div id="playerBox" style="display: none !important;" class="rounded-3xl overflow-hidden bg-black border border-white/10">
       <video-player>
         <video-minimal-skin>
           <video
@@ -185,8 +182,8 @@ function playVideo() {
     const link = document.getElementById("teraInput").value.trim();
     if (!link) return;
 
-    // Naya link load hone tak player container hide kardo
-    playerBox.classList.add("hidden");
+    // Load hone tak box ko strictly hide karke rakhenge
+    playerBox.style.setProperty("display", "none", "important");
 
     currentTeraLink = link;
     uploadedThumb = "";
@@ -251,8 +248,8 @@ video.addEventListener("loadedmetadata", () => {
         playerBox.style.aspectRatio = `${vw} / ${vh}`;
     }
 
-    // Video metadata load hote hi player box ko dikha do
-    playerBox.classList.remove("hidden");
+    // Direct display flex apply karke dikhayenge
+    playerBox.style.setProperty("display", "flex", "important");
 });
 
 // ================= AUTO SEEK FOR THUMBNAIL =================
