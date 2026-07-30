@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Teen18 Player</title>
+<title>Tera Player</title>
 
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
@@ -64,11 +64,12 @@ video {
   user-select: none;
 }
 
-/* Jab input disabled ho, toh background container ka colour normal rahe, sirf text/link dim ho */
+/* FIX: Input field disabled hone par poore box ka colour normal rahega, SIRF text/link ki brightness kam hogi */
 input:disabled {
-  cursor: not-allowed;
-  opacity: 0.4; /* Sirf link/text par low brightness rahegi */
-  -webkit-text-fill-color: #9ca3af; /* Text color ko thoda dim rakhega */
+  cursor: not-allowed !important;
+  opacity: 1 !important; /* Box ki brightness fully normal rahegi */
+  color: rgba(255, 255, 255, 0.4) !important; /* Sirf link text ki brightness kam hogi */
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important; /* Mobile/Safari browser fix */
 }
 </style>
 </head>
@@ -91,7 +92,7 @@ input:disabled {
       <!-- TITLE & SUBTITLE -->
       <div class="text-center mt-1">
         <h1 class="text-3xl font-extrabold tracking-tight">
-          Teen18 <span class="text-[#a78bfa]">Player</span>
+          Tera <span class="text-[#a78bfa]">Player</span>
         </h1>
         <p class="text-gray-400 text-sm mt-2 font-normal">
           Paste a secure media link to watch or download
@@ -105,7 +106,7 @@ input:disabled {
         id="teraInput"
         type="text"
         class="flex-1 bg-transparent px-3 py-1.5 text-sm text-gray-200 placeholder:text-gray-500 outline-none min-w-0"
-        placeholder="https://Terabox.site/xcofxph7iy5..."/>
+        placeholder="https://filesadda.site/xcofxph7iy5..."/>
 
       <button
         id="playBtn"
@@ -207,7 +208,7 @@ input:disabled {
   <!-- FOOTER -->
   <footer class="w-full text-center mt-8 py-2">
     <p class="text-[10px] tracking-widest text-gray-500 font-semibold uppercase">
-      POWERED BY GINOX ENGINE · FAST & SECURE
+      POWERED BY NEBULA ENGINE · FAST & SECURE
     </p>
   </footer>
 
