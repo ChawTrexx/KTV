@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,6 +64,12 @@ video {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* Custom styling for disabled input state */
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
 </style>
 </head>
 
@@ -93,7 +100,7 @@ video {
     </div>
 
     <!-- INPUT BOX SECTION -->
-    <div class="w-full bg-[#0e101a] border border-white/10 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/60 transition-all">
+    <div id="inputBoxWrapper" class="w-full bg-[#0e101a] border border-white/10 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/60 transition-all">
       <input
         id="teraInput"
         type="text"
@@ -101,6 +108,7 @@ video {
         placeholder="https://filesadda.site/xcofxph7iy5..."/>
 
       <button
+        id="playBtn"
         onclick="playVideo()"
         class="shrink-0 px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#00b4db] to-[#0083b0] hover:from-[#00c6ff] hover:to-[#0072ff] text-white font-semibold text-sm flex items-center gap-2 shadow-[0_0_15px_rgba(0,180,219,0.3)] active:scale-95 transition-all">
         <i class="fa-solid fa-caret-right text-base"></i> Play
@@ -214,6 +222,8 @@ const mediaContainer = document.getElementById("mediaContainer");
 const loaderCard = document.getElementById("loaderCard");
 const featuresList = document.getElementById("featuresList");
 const headerSection = document.getElementById("headerSection");
+const teraInput = document.getElementById("teraInput");
+const playBtn = document.getElementById("playBtn");
 
 // ================= VARIABLES =================
 let currentTeraLink = "";
@@ -234,8 +244,13 @@ const client = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ================= PLAY VIDEO =================
 function playVideo() {
-    const link = document.getElementById("teraInput").value.trim();
+    const link = teraInput.value.trim();
     if (!link) return;
+
+    // Input box & Play button ko DISABLE karo taaki copy/paste ya second click na ho sake
+    teraInput.disabled = true;
+    playBtn.disabled = true;
+    playBtn.classList.add("opacity-50", "pointer-events-none");
 
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "flex", "important");
@@ -274,7 +289,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     if (link) {
-        document.getElementById("teraInput").value = link;
+        teraInput.value = link;
         setTimeout(() => {
             playVideo();
         }, 300);
@@ -332,7 +347,15 @@ function openTelegram() {
 function resetPlayer() {
     video.pause();
     video.removeAttribute("src");
-    document.getElementById("teraInput").value = "";
+    
+    // Clear & Enable Input Field and Play Button again
+    teraInput.value = "";
+    teraInput.disabled = false;
+    playBtn.disabled = false;
+    playBtn.classList.remove("opacity-50", "pointer-events-none");
+    
+    teraInput.focus(); // Focus on input for fast pasting
+
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "none", "important");
 
