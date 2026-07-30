@@ -64,10 +64,12 @@ video {
   user-select: none;
 }
 
-/* Normal input styling when disabled (No dim/low brightness) */
+/* Disabled hone par input container ka background/border fully normal rahega */
 input:disabled {
-  cursor: not-allowed;
-  opacity: 1;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+  color: #6b7280 !important; /* Screenshot ke exact dim grey text match ke liye */
+  -webkit-text-fill-color: #6b7280 !important;
 }
 </style>
 </head>
@@ -99,7 +101,7 @@ input:disabled {
     </div>
 
     <!-- INPUT BOX SECTION -->
-    <div id="inputBoxWrapper" class="w-full bg-[#0e101a] border border-white/10 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/60 transition-all">
+    <div id="inputBoxWrapper" class="w-full bg-[#0e101a] border border-purple-500/40 rounded-2xl p-2 flex items-center shadow-lg focus-within:border-purple-500/80 transition-all">
       <input
         id="teraInput"
         type="text"
@@ -140,7 +142,7 @@ input:disabled {
         </video-player>
       </div>
 
-      <!-- Action Buttons (Both same size) -->
+      <!-- Action Buttons -->
       <div class="w-full flex items-center gap-3">
         <button
           onclick="openTelegram()"
@@ -246,10 +248,10 @@ function playVideo() {
     const link = teraInput.value.trim();
     if (!link) return;
 
-    // Disable input box & play button
+    // Disable input box & play button without dimming Play Button's background opacity
     teraInput.disabled = true;
     playBtn.disabled = true;
-    playBtn.classList.add("opacity-50", "pointer-events-none");
+    playBtn.classList.add("pointer-events-none");
 
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "flex", "important");
@@ -349,7 +351,7 @@ function resetPlayer() {
     teraInput.value = "";
     teraInput.disabled = false;
     playBtn.disabled = false;
-    playBtn.classList.remove("opacity-50", "pointer-events-none");
+    playBtn.classList.remove("pointer-events-none");
     
     teraInput.focus();
 
