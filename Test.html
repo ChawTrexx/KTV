@@ -71,22 +71,25 @@ video {
   <!-- MAIN CONTAINER -->
   <div class="w-full max-w-sm sm:max-w-md flex flex-col items-center gap-4 my-auto">
 
-    <!-- LOGO CONTAINER WITH GLOW -->
-    <div class="relative flex items-center justify-center pt-2">
-      <div class="absolute w-32 h-32 logo-outer-glow rounded-full"></div>
-      <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#8b5cf6] via-[#a855f7] to-[#3b82f6] flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)] relative z-10">
-        <i class="fa-solid fa-play text-white text-3xl ml-1"></i>
+    <!-- HEADER SECTION (LOGO + TITLE + SUBTITLE) -->
+    <div id="headerSection" class="w-full flex flex-col items-center gap-4">
+      <!-- LOGO CONTAINER WITH GLOW -->
+      <div class="relative flex items-center justify-center pt-2">
+        <div class="absolute w-32 h-32 logo-outer-glow rounded-full"></div>
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-[#8b5cf6] via-[#a855f7] to-[#3b82f6] flex items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.4)] relative z-10">
+          <i class="fa-solid fa-play text-white text-3xl ml-1"></i>
+        </div>
       </div>
-    </div>
 
-    <!-- TITLE & SUBTITLE -->
-    <div class="text-center mt-1">
-      <h1 class="text-3xl font-extrabold tracking-tight">
-        Tera <span class="text-[#a78bfa]">Player</span>
-      </h1>
-      <p class="text-gray-400 text-sm mt-2 font-normal">
-        Paste a secure media link to watch or download
-      </p>
+      <!-- TITLE & SUBTITLE -->
+      <div class="text-center mt-1">
+        <h1 class="text-3xl font-extrabold tracking-tight">
+          Tera <span class="text-[#a78bfa]">Player</span>
+        </h1>
+        <p class="text-gray-400 text-sm mt-2 font-normal">
+          Paste a secure media link to watch or download
+        </p>
+      </div>
     </div>
 
     <!-- INPUT BOX SECTION -->
@@ -133,7 +136,7 @@ video {
       <!-- Action Buttons -->
       <div class="w-full flex items-center gap-3">
         <button
-          onclick="https://t.me/+Z9NCK1v9z9owYmE1"
+          onclick="openTelegram()"
           class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md">
           <i class="fa-brands fa-telegram text-lg"></i> Join Now
         </button>
@@ -202,7 +205,7 @@ video {
 
 <script>
 // ================= TELEGRAM CHANNEL LINK =================
-const telegramChannelLink = "https://t.me/your_telegram_channel_here"; 
+const telegramChannelLink = "https://t.me/+Z9NCK1v9z9owYmE1"; 
 
 // ================= PLAYER & UI =================
 const video = document.getElementById("player");
@@ -210,6 +213,7 @@ const playerBox = document.getElementById("playerBox");
 const mediaContainer = document.getElementById("mediaContainer");
 const loaderCard = document.getElementById("loaderCard");
 const featuresList = document.getElementById("featuresList");
+const headerSection = document.getElementById("headerSection");
 
 // ================= VARIABLES =================
 let currentTeraLink = "";
@@ -238,6 +242,9 @@ function playVideo() {
 
     if (featuresList) {
         featuresList.style.removeProperty("display");
+    }
+    if (headerSection) {
+        headerSection.style.removeProperty("display");
     }
 
     currentTeraLink = link;
@@ -274,13 +281,19 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ================= SHOW PLAYER & HIDE LOADER/FEATURES ON READY =================
+// ================= SHOW PLAYER & HIDE HEADER/LOADER/FEATURES ON READY =================
 video.addEventListener("canplay", () => {
     const vw = video.videoWidth || 640;
     const vh = video.videoHeight || 360;
 
     loaderCard.style.setProperty("display", "none", "important");
 
+    // Hide Logo, Title & Subtitle
+    if (headerSection) {
+        headerSection.style.setProperty("display", "none", "important");
+    }
+
+    // Hide Features List
     if (featuresList) {
         featuresList.style.setProperty("display", "none", "important");
     }
@@ -323,6 +336,10 @@ function resetPlayer() {
     mediaContainer.style.setProperty("display", "none", "important");
     loaderCard.style.setProperty("display", "none", "important");
 
+    // Show Header (Logo + Title) and Features again
+    if (headerSection) {
+        headerSection.style.removeProperty("display");
+    }
     if (featuresList) {
         featuresList.style.removeProperty("display");
     }
