@@ -1,0 +1,21 @@
+{
+  "name": "Admin",
+  "short_name": "Admin",
+  "start_url": "./XQ.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#1e90ff",
+  "description": "🌟 Premium Adult Videos Site 🌟",
+  "icons": [
+    {
+      "src": "Teen192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "teen18.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
