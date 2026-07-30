@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>Nebula Video Player</title>
 
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
@@ -24,29 +24,30 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
-body {
+/* Dynamic Viewport height for perfect mobile fit */
+html, body {
+  height: 100%;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background-color: #0b0c10;
   color: #ffffff;
-  overflow-x: hidden;
 }
 
 /* Glow logo effect */
 .logo-glow {
-  box-shadow: 0 0 35px rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.45);
 }
 
 /* Glass card styling */
 .nebula-card {
-  background: rgba(19, 21, 32, 0.7);
+  background: rgba(19, 21, 32, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nebula-card:hover {
-  border-color: rgba(139, 92, 246, 0.25);
 }
 
 #playerBox {
@@ -71,136 +72,146 @@ video {
 </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between items-center px-4 py-6 bg-[#0b0c10] text-white selection:bg-purple-500 selection:text-white">
+<body class="w-full h-full flex flex-col justify-between items-center px-4 py-4 sm:py-6 bg-[#0b0c10] text-white">
 
-  <!-- MAIN WRAPPER -->
-  <div class="w-full max-w-md flex flex-col items-center gap-5 my-auto">
+  <!-- MAIN WRAPPER (Flexible Screen Fitting) -->
+  <div class="w-full max-w-md h-full flex flex-col items-center justify-between z-10 py-1">
 
-    <!-- LOGO ICON -->
-    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 flex items-center justify-center logo-glow mt-2 transition-all">
-      <i class="fa-solid fa-play text-white text-2xl sm:text-3xl ml-1"></i>
-    </div>
-
-    <!-- HEADER TITLE -->
-    <div class="text-center">
-      <h1 class="text-2xl sm:text-3xl font-black tracking-wide">
-        Nebula <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Player</span>
-      </h1>
-      <p class="text-gray-400 text-xs sm:text-sm mt-1">
-        Paste a secure media link to watch or stream
-      </p>
-    </div>
-
-    <!-- INPUT BOX SECTION -->
-    <div class="w-full relative flex items-center bg-[#131520] border border-white/10 rounded-2xl p-1.5 focus-within:border-purple-500/80 transition-all shadow-xl">
-      <input
-        id="teraInput"
-        type="text"
-        class="flex-1 bg-transparent px-3 sm:px-4 py-2 text-xs sm:text-sm text-white placeholder:text-gray-500 outline-none min-w-0"
-        placeholder="https://filesadda.site/zbktz5meo..."/>
-
-      <button
-        onclick="playVideo()"
-        class="shrink-0 px-4 sm:px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.35)] active:scale-95 transition-all">
-        <i class="fa-solid fa-caret-right text-base"></i> Play
-      </button>
-    </div>
-
-    <!-- LOADING CARD (Strict Inline Display None by default) -->
-    <div id="loaderCard" style="display: none !important;" class="w-full nebula-card rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center gap-4 border border-purple-500/20 shadow-2xl animate-fade-in">
-      <div class="relative flex items-center justify-center">
-        <div class="w-12 h-12 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin"></div>
-        <i class="fa-solid fa-circle-play text-purple-400 absolute text-sm animate-pulse"></i>
+    <!-- TOP SECTION: LOGO & TITLE & INPUT -->
+    <div class="w-full flex flex-col items-center gap-3 sm:gap-4 shrink-0">
+      
+      <!-- LOGO ICON -->
+      <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-3xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 flex items-center justify-center logo-glow mt-1">
+        <i class="fa-solid fa-play text-white text-xl sm:text-2xl ml-1"></i>
       </div>
+
+      <!-- HEADER TITLE -->
       <div class="text-center">
-        <p class="text-xs sm:text-sm font-semibold text-gray-200 tracking-wide">Loading Media Stream...</p>
-        <p class="text-[11px] sm:text-xs text-gray-400 mt-1">Please wait while we prepare high-speed playback</p>
-      </div>
-    </div>
-
-    <!-- VIDEO PLAYER & ACTION BUTTONS CONTAINER (Strict Inline Display None by default) -->
-    <div id="mediaContainer" style="display: none !important;" class="w-full flex-col gap-4 animate-fade-in">
-      
-      <!-- Video Player Card -->
-      <div id="playerBox" class="rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
-        <video-player>
-          <video-minimal-skin>
-            <video
-              id="player"
-              autoplay
-              muted
-              playsinline
-              crossorigin="anonymous"
-              oncontextmenu="return false;"
-              controlsList="nodownload">
-            </video>
-          </video-minimal-skin>
-        </video-player>
+        <h1 class="text-2xl sm:text-3xl font-black tracking-wide leading-tight">
+          Nebula <span class="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">Player</span>
+        </h1>
+        <p class="text-gray-400 text-xs sm:text-sm mt-0.5">
+          Paste a secure media link to watch or stream
+        </p>
       </div>
 
-      <!-- Action Buttons (Join Telegram & New Link) -->
-      <div class="w-full flex items-center gap-3">
-        <button
-          onclick="openTelegram()"
-          class="flex-1 py-3 sm:py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] active:scale-95 transition-all">
-          <i class="fa-brands fa-telegram text-base sm:text-lg"></i> Join Now
-        </button>
+      <!-- INPUT BOX SECTION -->
+      <div class="w-full relative flex items-center bg-[#131520] border border-white/10 rounded-2xl p-1.5 focus-within:border-purple-500/80 transition-all shadow-lg">
+        <input
+          id="teraInput"
+          type="text"
+          class="flex-1 bg-transparent px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-white placeholder:text-gray-500 outline-none min-w-0"
+          placeholder="https://filesadda.site/zbktz5meo..."/>
 
         <button
-          onclick="resetPlayer()"
-          class="flex-1 py-3 sm:py-3.5 px-4 rounded-2xl bg-[#1b1c28] border border-white/10 hover:bg-[#232536] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-          <i class="fa-solid fa-arrows-rotate text-xs sm:text-sm text-gray-300"></i> New Link
+          onclick="playVideo()"
+          class="shrink-0 px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 shadow-[0_0_15px_rgba(6,182,212,0.35)] active:scale-95 transition-all">
+          <i class="fa-solid fa-caret-right text-sm"></i> Play
         </button>
       </div>
 
     </div>
 
-    <!-- FEATURES LIST (Loading par dikhega, video ready hone par hide ho jayega) -->
-    <div id="featuresList" class="w-full flex flex-col gap-2.5 sm:gap-3 transition-all duration-300">
+    <!-- MIDDLE SECTION: DYNAMIC CONTENT (Loader / Video Player / Features) -->
+    <div class="w-full flex-1 flex flex-col justify-center my-2 overflow-hidden">
       
-      <!-- Feature 1 -->
-      <div class="w-full nebula-card rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-bolt text-yellow-400 text-lg sm:text-xl"></i>
+      <!-- LOADING CARD -->
+      <div id="loaderCard" style="display: none !important;" class="w-full nebula-card rounded-3xl p-6 flex flex-col items-center justify-center gap-3 border border-purple-500/20 shadow-2xl">
+        <div class="relative flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full border-4 border-purple-500/20 border-t-purple-500 animate-spin"></div>
+          <i class="fa-solid fa-circle-play text-purple-400 absolute text-xs animate-pulse"></i>
         </div>
-        <div>
-          <h3 class="font-bold text-xs sm:text-sm text-white">Ultra Fast Stream</h3>
-          <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">Instantly load videos with high-speed direct decoding servers.</p>
-        </div>
-      </div>
-
-      <!-- Feature 2 -->
-      <div class="w-full nebula-card rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-shield-halved text-cyan-400 text-lg sm:text-xl"></i>
-        </div>
-        <div>
-          <h3 class="font-bold text-sm text-white">Secure & Private</h3>
-          <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">Your sessions are fully encrypted and protected inside Telegram.</p>
+        <div class="text-center">
+          <p class="text-xs sm:text-sm font-semibold text-gray-200 tracking-wide">Loading Media Stream...</p>
+          <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Please wait while we prepare high-speed playback</p>
         </div>
       </div>
 
-      <!-- Feature 3 -->
-      <div class="w-full nebula-card rounded-2xl p-3.5 sm:p-4 flex items-center gap-3.5">
-        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-video text-purple-400 text-lg sm:text-xl"></i>
+      <!-- VIDEO PLAYER & ACTION BUTTONS CONTAINER -->
+      <div id="mediaContainer" style="display: none !important;" class="w-full flex-col gap-3 max-h-full overflow-y-auto">
+        
+        <!-- Video Player Card -->
+        <div id="playerBox" class="rounded-2xl sm:rounded-3xl overflow-hidden bg-black border border-white/10 shadow-2xl">
+          <video-player>
+            <video-minimal-skin>
+              <video
+                id="player"
+                autoplay
+                muted
+                playsinline
+                crossorigin="anonymous"
+                oncontextmenu="return false;"
+                controlsList="nodownload">
+              </video>
+            </video-minimal-skin>
+          </video-player>
         </div>
-        <div>
-          <h3 class="font-bold text-xs sm:text-sm text-white">Full HD Quality</h3>
-          <p class="text-[11px] sm:text-xs text-gray-400 mt-0.5">Stream and download files in original source resolution.</p>
+
+        <!-- Action Buttons -->
+        <div class="w-full flex items-center gap-2.5">
+          <button
+            onclick="openTelegram()"
+            class="flex-1 py-3 px-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(6,182,212,0.3)] active:scale-95 transition-all">
+            <i class="fa-brands fa-telegram text-base"></i> Join Now
+          </button>
+
+          <button
+            onclick="resetPlayer()"
+            class="flex-1 py-3 px-3 rounded-xl bg-[#1b1c28] border border-white/10 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 hover:bg-[#232536] active:scale-95 transition-all">
+            <i class="fa-solid fa-arrows-rotate text-xs text-gray-300"></i> New Link
+          </button>
         </div>
+
+      </div>
+
+      <!-- FEATURES LIST (Loading par dikhega, video ready hone par hide ho jayega) -->
+      <div id="featuresList" class="w-full flex flex-col gap-2 sm:gap-2.5">
+        
+        <!-- Feature 1 -->
+        <div class="w-full nebula-card rounded-2xl p-3 sm:p-3.5 flex items-center gap-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-bolt text-yellow-400 text-base sm:text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xs sm:text-sm text-white">Ultra Fast Stream</h3>
+            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Instantly load videos with high-speed direct decoding servers.</p>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="w-full nebula-card rounded-2xl p-3 sm:p-3.5 flex items-center gap-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-shield-halved text-cyan-400 text-base sm:text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xs sm:text-sm text-white">Secure & Private</h3>
+            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Your sessions are fully encrypted and protected inside Telegram.</p>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="w-full nebula-card rounded-2xl p-3 sm:p-3.5 flex items-center gap-3">
+          <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-video text-purple-400 text-base sm:text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-xs sm:text-sm text-white">Full HD Quality</h3>
+            <p class="text-[10px] sm:text-xs text-gray-400 mt-0.5">Stream and download files in original source resolution.</p>
+          </div>
+        </div>
+
       </div>
 
     </div>
+
+    <!-- BOTTOM FOOTER -->
+    <footer class="w-full shrink-0 text-center pt-1 pb-0.5">
+      <p class="text-[9px] sm:text-[10px] tracking-widest text-gray-500 font-semibold uppercase opacity-75">
+        POWERED BY NEBULA ENGINE · FAST & SECURE
+      </p>
+    </footer>
 
   </div>
-
-  <!-- CLEAN STICKY FOOTER -->
-  <footer class="w-full py-4 text-center mt-auto">
-    <p class="text-[10px] sm:text-[11px] tracking-widest text-gray-500 font-semibold uppercase opacity-80 hover:opacity-100 transition-opacity">
-      POWERED BY NEBULA ENGINE · FAST & SECURE
-    </p>
-  </footer>
 
 <script>
 // ================= TELEGRAM CHANNEL LINK =================
@@ -294,8 +305,8 @@ video.addEventListener("canplay", () => {
     // Dynamic Aspect Ratio and Height
     if (vh > vw) {
         playerBox.style.width = "100%";
-        playerBox.style.maxWidth = "360px";
-        playerBox.style.height = "70vh";
+        playerBox.style.maxWidth = "320px";
+        playerBox.style.height = "55vh";
         playerBox.style.aspectRatio = "unset";
     } 
     else if (vw <= 480) {
