@@ -192,62 +192,45 @@ supabase.createClient(
 // ================= PLAY VIDEO =================
 function playVideo(){
 
-  const link =
-  document.getElementById("teraInput")
-  .value
-  .trim();
+  const link = document.getElementById("teraInput").value.trim();
 
   if(!link) return;
 
   currentTeraLink = link;
-
   uploadedThumb = "";
   thumbnailDone = false;
 
-  // ================= STREAM URL =================
   const streamUrl =
   "https://1024teradownloader.in/api/video-stream?url=" +
   encodeURIComponent(link) +
   "&index=0&quality=360p";
 
-// ================= LOAD VIDEO =================
-video.src = streamUrl;
+  video.src = streamUrl;
+  video.load();
 
-video.load();
+  video.muted = true;
+  video.playsInline = true;
 
-video.muted = true;      // Autoplay allow
-video.playsInline = true;
+  video.play()
+  .catch(() => {
+      video.addEventListener("canplay", () => {
+          video.play().catch(console.error);
+      }, { once:true });
+  });
 
-video.play()
-.then(() => {
-    console.log("Video Playing");
-})
-.catch(err => {
-    console.log("Autoplay Failed:", err);
+} // <-- Function yahin END hoga
 
-    // Metadata load hone ke baad dobara try
-    video.addEventListener("canplay", () => {
-        video.play().catch(console.error);
-    }, { once: true });
-});
-
-
-  // ================= AUTO PLAY FROM URL =================
+// ================= AUTO PLAY FROM URL =================
 window.addEventListener("DOMContentLoaded", () => {
 
     let link = "";
 
     if (location.search.startsWith("?=")) {
         link = decodeURIComponent(location.search.substring(2));
-    } else {
-        const params = new URLSearchParams(location.search);
-        link = params.get("") || "";
     }
 
     if (link) {
         document.getElementById("teraInput").value = link;
-
-        currentTeraLink = link;
 
         setTimeout(() => {
             playVideo();
