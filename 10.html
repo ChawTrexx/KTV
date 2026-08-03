@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>TeraBox 10-Video Player Grid</title>
+<title>TeraBox Link Converter</title>
 
 <meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
 
@@ -45,6 +45,18 @@ video-minimal-skin {
   height: 100%;
   display: block;
 }
+
+/* Off-Screen Processing Wrapper (Screen par visible nahi hoga par DOM me rendering chalegi) */
+.hidden-processor {
+  position: fixed;
+  top: -9999px;
+  left: -9999px;
+  width: 320px;
+  height: 180px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -999;
+}
 </style>
 </head>
 
@@ -52,6 +64,12 @@ video-minimal-skin {
 
 <div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
 <div class="fixed inset-0 bg-black/70 -z-10"></div>
+
+<!-- Live Status Banner (Floating Banner) -->
+<div id="statusBanner" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 border border-pink-500/30 px-5 py-2.5 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md hidden transition-all duration-300 flex items-center gap-2">
+  <div class="w-2 h-2 rounded-full bg-pink-500 animate-ping"></div>
+  <span id="statusText" class="text-pink-400">Ready</span>
+</div>
 
 <header class="w-[94%] mx-auto mt-3 h-[55px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-5 z-50 shrink-0">
   <div class="text-white font-bold text-lg tracking-wider">
@@ -65,50 +83,34 @@ video-minimal-skin {
   </button>
 </header>
 
-<main class="w-[94%] mx-auto my-3">
-  <div class="grid grid-cols-2 gap-2">
-    
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player0" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player1" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
+<main class="w-[94%] mx-auto my-auto flex flex-col items-center justify-center">
+  <!-- Hidden Background Players Container -->
+  <div class="hidden-processor">
+    <video-player><video-minimal-skin><video id="player0" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player1" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player2" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player3" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player4" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player5" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player6" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player7" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player8" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+    <video-player><video-minimal-skin><video id="player9" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+  </div>
 
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player2" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
+  <!-- Main Banner Message -->
+  <div class="text-center py-6">
+    <div class="w-16 h-16 bg-pink-500/10 border border-pink-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-pink-500 text-2xl shadow-[0_0_15px_rgba(236,72,153,0.2)]">
+      <i class="fa-solid fa-bolt"></i>
     </div>
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player3" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player4" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player5" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player6" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player7" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player8" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-    <div class="relative bg-black border border-white/10 rounded-xl overflow-hidden h-[100px] sm:h-[130px] flex items-center justify-center">
-      <video-player><video-minimal-skin><video id="player9" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
-    </div>
-
+    <h2 class="text-lg font-bold">TeraBox Multi Auto-Poster</h2>
+    <p class="text-xs text-white/50 mt-1">Enter your links below to auto-post thumbnails & short links to Telegram</p>
   </div>
 </main>
 
 <footer class="w-[94%] mx-auto mb-4 flex flex-col gap-2 z-50 shrink-0">
   
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1">
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">1.</span>
       <input id="teraInput0" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 1"/>
@@ -164,39 +166,94 @@ video-minimal-skin {
     id="playBtn"
     onclick="playAllVideos()"
     class="w-full h-12 mt-1 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-sm shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2">
-    <i class="fa-solid fa-play"></i>
-    <span id="btnText">PLAY ALL VIDEOS</span>
+    <i class="fa-solid fa-paper-plane"></i>
+    <span id="btnText">GENERATE & POST TO TELEGRAM</span>
   </button>
 
 </footer>
 
 <script>
-// ================= CONFIG & API KEYS =================
-const imgbbApi = "5aacb3e6f7364ee6196c4e831dfc8f3d";
+// ================= TELEGRAM CONFIG =================
 const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
 const chatId = "-1001966599723";
 
+// ================= SUPABASE CONFIG =================
+const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
+const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
+
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjEwMTMyOTI3MX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 10 Video Elements & States
 const videoElements = Array.from({ length: 10 }, (_, i) => document.getElementById(`player${i}`));
 const videoStates = Array.from({ length: 10 }, () => ({ link: "", thumbnailDone: false }));
 
-// Queue for Processing Videos Sequentially
 let processQueue = [];
 let isProcessing = false;
 
-// ================= MAIN FUNCTION: PLAY ALL =================
+function showStatus(msg, isSuccess = false) {
+  const banner = document.getElementById("statusBanner");
+  const text = document.getElementById("statusText");
+  banner.classList.remove("hidden");
+  text.innerText = msg;
+  if(isSuccess) {
+    text.className = "text-emerald-400 font-bold";
+  } else {
+    text.className = "text-pink-400 font-semibold";
+  }
+}
+
+async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
+  try {
+    const byteCharacters = atob(base64Image);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+    const fileName = `thumb_${Math.random().toString(36).substring(2, 10)}_${Date.now()}.jpg`;
+
+    const { data: storageData, error: storageError } = await imageClient
+      .storage
+      .from('images')
+      .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+    if (storageError) throw storageError;
+
+    const { data: publicUrlData } = imageClient
+      .storage
+      .from('images')
+      .getPublicUrl(fileName);
+
+    const publicUrl = publicUrlData.publicUrl;
+    const expiresAt = new Date(Date.now() + expirationSec * 1000).toISOString();
+
+    await imageClient.from('uploads').insert([{
+      file_path: fileName,
+      delete_token: Math.random().toString(36).substring(2, 12),
+      expires_at: expiresAt
+    }]);
+
+    return publicUrl;
+  } catch (err) {
+    console.error("Custom Image Host Error:", err);
+    return null;
+  }
+}
+
 function playAllVideos() {
   processQueue = [];
+  let countInputs = 0;
   
   for (let i = 0; i < 10; i++) {
     const inputEl = document.getElementById(`teraInput${i}`);
     const link = inputEl ? inputEl.value.trim() : "";
 
     if (link) {
+      countInputs++;
       videoStates[i].link = link;
       videoStates[i].thumbnailDone = false;
 
@@ -207,18 +264,23 @@ function playAllVideos() {
       const vEl = videoElements[i];
       vEl.src = streamUrl;
       vEl.load();
-      vEl.play().catch(e => console.log(`Auto-play blocked for player ${i + 1}`, e));
+      vEl.play().catch(e => console.log(`Auto-capture started for video ${i + 1}`));
     }
+  }
+
+  if(countInputs === 0) {
+    showStatus("⚠️ Please enter at least one link!");
+    setTimeout(() => document.getElementById("statusBanner").classList.add("hidden"), 3000);
+  } else {
+    showStatus(`Processing ${countInputs} links in background... ⏳`);
   }
 }
 
-// Attach Event Listeners to Seek & Push to Queue
 videoElements.forEach((video, index) => {
-
   video.addEventListener("loadeddata", () => {
     setTimeout(() => {
       video.currentTime = Math.min(3, video.duration || 1);
-    }, 1500);
+    }, 1200);
   });
 
   video.addEventListener("seeked", () => {
@@ -226,14 +288,11 @@ videoElements.forEach((video, index) => {
     if (state.thumbnailDone || !state.link) return;
 
     state.thumbnailDone = true;
-    
-    // Push task to queue
     processQueue.push({ video, index, link: state.link });
     processQueueNext();
   });
 });
 
-// Sequential Worker (One by One Upload & Telegram Dispatch)
 async function processQueueNext() {
   if (isProcessing || processQueue.length === 0) return;
 
@@ -241,7 +300,9 @@ async function processQueueNext() {
   const task = processQueue.shift();
 
   const btnText = document.getElementById("btnText");
-  btnText.innerText = `PROCESSING ${task.index + 1}/10...`;
+  const progressMsg = `🚀 Processing Link ${task.index + 1}...`;
+  btnText.innerText = progressMsg;
+  showStatus(progressMsg);
 
   try {
     const video = task.video;
@@ -253,23 +314,12 @@ async function processQueueNext() {
 
     const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
 
-    // Upload to ImgBB
-    const upload = await fetch("https://api.imgbb.com/1/upload?key=" + imgbbApi, {
-      method: "POST",
-      body: new URLSearchParams({
-        image: base64,
-        expiration: "60"
-      })
-    });
+    const uploadedThumb = await uploadThumbToMyHost(base64, 60);
 
-    const data = await upload.json();
-
-    if (data.success) {
-      const uploadedThumb = data.data.url;
+    if (uploadedThumb) {
       const code = Math.random().toString(36).slice(2, 8);
       const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(task.link);
 
-      // Check Duplicates
       const existing = await client
         .from("links")
         .select("*")
@@ -280,7 +330,6 @@ async function processQueueNext() {
         await client.from("links").insert([{ long_url: shareLink, short_code: code }]);
         const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
 
-        // Send Photo to Telegram
         await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -304,13 +353,14 @@ async function processQueueNext() {
   if (processQueue.length > 0) {
     processQueueNext();
   } else {
-    btnText.innerText = "ALL DONE! ▶️ PLAY AGAIN";
+    btnText.innerText = "ALL SENT TO TELEGRAM! ✅";
+    showStatus("🎉 All Uploaded & Posted Successfully! ✅", true);
     setTimeout(() => {
-      btnText.innerText = "PLAY ALL VIDEOS";
-    }, 4000);
+      btnText.innerText = "GENERATE & POST TO TELEGRAM";
+      document.getElementById("statusBanner").classList.add("hidden");
+    }, 5000);
   }
 }
 </script>
 </body>
 </html>
-
