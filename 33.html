@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TeraBox Video Player</title>
+
+<meta name="monetag" content="41e692a6b5c0b59b151f300b5cef7bd3">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e90ff">
+<link rel="icon" href="protection.png">
+<meta property="og:title" content="Video Title Here" />
+<meta property="og:description" content="Watch this video on Teen18" />
+<meta property="og:image" content="THUMBNAIL_URL_HERE" />
+<meta property="og:type" content="video.other" />
+<meta property="og:url" content="YOUR_WATCH_URL" />
+
+<!-- VIDEO JS -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+body{
+  font-family:'Segoe UI',sans-serif;
+}
+
+.bg-blur{
+  background:url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4')
+  center/cover no-repeat;
+}
+
+video{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:black;
+}
+
+video-player,
+video-minimal-skin{
+  width:100%;
+  height:100%;
+  display:block;
+}
+</style>
+</head>
+
+<body class="bg-black overflow-hidden h-screen">
+
+<!-- BACKGROUND -->
+<div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
+<div class="fixed inset-0 bg-black/70 -z-10"></div>
+
+<!-- HEADER -->
+<div class="fixed top-4 left-1/2 -translate-x-1/2 w-[94%] h-[70px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-6 z-50">
+
+  <div class="text-white font-bold text-xl">
+    TEEN<span class="text-pink-500">18</span>
+  </div>
+
+  <button
+    onclick="window.open('https://t.me/+Q656m5kaC245Njg1','_blank')"
+    class="bg-pink-500/20 px-4 py-2 rounded-full text-white">
+    Join Now 🌟
+  </button>
+
+</div>
+
+<!-- PLAYER -->
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[94%] h-[70vh] bg-black border border-white/10 rounded-3xl overflow-hidden">
+
+  <video-player>
+    <video-minimal-skin>
+      <video
+        id="player"
+        autoplay
+        playsinline
+        crossorigin="anonymous">
+      </video>
+    </video-minimal-skin>
+  </video-player>
+
+</div>
+
+<!-- INPUT -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[94%] flex gap-3 z-50">
+
+  <div class="flex-1 h-14 bg-[#1a1a1a] border border-white/10 rounded-2xl flex items-center relative overflow-hidden shadow-xl">
+
+    <!-- Paste Button -->
+    <button
+      onclick="navigator.clipboard.readText().then(text=>document.getElementById('teraInput').value=text)"
+      class="shrink-0 w-[44px] h-[44px] ml-1.5 rounded-[14px] bg-[#2948ff] text-white flex items-center justify-center active:scale-95 transition-all duration-200 shadow-lg">
+      <i class="fa-duotone fa-solid fa-paste"></i>
+    </button>
+
+    <!-- Input -->
+    <input
+      id="teraInput"
+      type="text"
+      class="flex-1 min-w-0 h-full bg-transparent px-4 text-white placeholder:text-white/35 outline-none"
+      placeholder="Paste your TeraBox link"/>
+
+  </div>
+
+  <!-- Play Button -->
+  <button
+    onclick="playVideo()"
+    class="w-[90px] h-14 shrink-0 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-95 transition-all duration-200">
+    PLAY
+  </button>
+
+</div>
+
+<script>
+
+// ================= PLAYER =================
+const video = document.getElementById("player");
+
+// ================= VARIABLES =================
+let currentTeraLink = "";
+let uploadedThumb = "";
+let thumbnailDone = false;
+
+// ================= TELEGRAM CONFIG =================
+const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
+const chatId = "-1001966599723";
+
+// ================= YOUR CUSTOM SUPABASE CONFIG =================
+const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
+const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+
+const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
+
+// ================= SHORTLINK SUPABASE CONFIG =================
+const linkSupabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const linkSupabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+
+const linkClient = supabase.createClient(linkSupabaseUrl, linkSupabaseKey);
+
+
+// ================= CUSTOM IMAGE UPLOADER FUNCTION =================
+async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
+  try {
+    // 1. Convert Base64 to Blob
+    const byteCharacters = atob(base64Image);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+    // 2. File Name Setup
+    const fileName = `thumb_${Math.random().toString(36).substring(2, 10)}_${Date.now()}.jpg`;
+
+    // 3. Upload to Storage
+    const { data: storageData, error: storageError } = await imageClient
+      .storage
+      .from('images')
+      .upload(fileName, blob, { contentType: 'image/jpeg' });
+
+    if (storageError) throw storageError;
+
+    // 4. Get Public URL
+    const { data: publicUrlData } = imageClient
+      .storage
+      .from('images')
+      .getPublicUrl(fileName);
+
+    const publicUrl = publicUrlData.publicUrl;
+    const expiresAt = new Date(Date.now() + expirationSec * 1000).toISOString();
+
+    // 5. Track in Database for Auto-Delete
+    await imageClient.from('uploads').insert([{
+      file_path: fileName,
+      delete_token: Math.random().toString(36).substring(2, 12),
+      expires_at: expiresAt
+    }]);
+
+    return publicUrl;
+
+  } catch (err) {
+    console.error("Custom Image Upload Error:", err);
+    return null;
+  }
+}
+
+// ================= PLAY VIDEO =================
+function playVideo(){
+  const link = document.getElementById("teraInput").value.trim();
+  if(!link) return;
+
+  currentTeraLink = link;
+  uploadedThumb = "";
+  thumbnailDone = false;
+
+  // STREAM URL
+  const streamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
+    encodeURIComponent(link) +
+    "&index=0&quality=360p";
+
+  video.src = streamUrl;
+  video.load();
+  video.play().catch(()=>{});
+}
+
+// ================= AUTO THUMBNAIL =================
+video.addEventListener("loadeddata", ()=>{
+  setTimeout(()=>{
+    video.currentTime = Math.min(3, video.duration || 1);
+  }, 1500);
+});
+
+// ================= GENERATE THUMB =================
+video.addEventListener("seeked", async ()=>{
+  if(thumbnailDone) return;
+  thumbnailDone = true;
+
+  try{
+    // CANVAS
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // BASE64
+    const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
+
+    // ================= UPLOAD TO YOUR IMAGE API SYSTEM =================
+    uploadedThumb = await uploadThumbToMyHost(base64, 60);
+
+    if(uploadedThumb) {
+
+      // SHORT LINK
+      const code = Math.random().toString(36).slice(2,8);
+      const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(currentTeraLink);
+
+      // CHECK DUPLICATE
+      const existing = await linkClient
+        .from("links")
+        .select("*")
+        .eq("long_url", shareLink)
+        .maybeSingle();
+
+      if(existing.data){
+        console.log("Already Sent");
+        return;
+      }
+
+      // SAVE DATABASE
+      await linkClient
+        .from("links")
+        .insert([{
+          long_url: shareLink,
+          short_code: code
+        }]);
+
+      // FINAL SHORT URL
+      const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
+
+      // TELEGRAM SEND
+      await fetch(
+        `https://api.telegram.org/bot${botToken}/sendPhoto`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            photo: uploadedThumb,
+            caption: `🎬 Watch this video for FREE!\n\n▶️ Tap the button below to play instantly`,
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "👉 Play Online Free 👅💦",
+                    url: shortUrl
+                  }
+                ]
+              ]
+            }
+          })
+        }
+      );
+
+      console.log("Telegram Sent with Custom Uploaded Image!");
+    }
+
+  } catch(err){
+    console.log(err);
+  }
+});
+</script>
+</body>
+</html>
