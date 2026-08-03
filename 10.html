@@ -20,9 +20,11 @@ video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
 <body class="bg-black text-white min-h-screen pb-32 overflow-y-auto">
 
+<!-- BACKGROUND -->
 <div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
 <div class="fixed inset-0 bg-black/80 -z-10"></div>
 
+<!-- HEADER -->
 <div class="w-[94%] mx-auto mt-4 h-[60px] bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between px-6">
   <div class="font-bold text-xl">
     TEEN<span class="text-pink-500">18</span> <span class="text-xs bg-pink-500/30 px-2 py-1 rounded ml-2">4x Auto Mode</span>
@@ -32,29 +34,32 @@ video { width: 100%; height: 100%; object-fit: contain; background: black; }
   </button>
 </div>
 
-<div id="hiddenPlayerPool" class="hidden"></div>
-
+<!-- MAIN CONTROLS & 4 PASTE BOXES -->
 <div class="w-[94%] mx-auto mt-6 flex flex-col gap-4">
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <!-- Box 1 -->
     <div class="h-12 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center overflow-hidden">
       <span class="px-3 text-pink-500 font-bold text-sm">#1</span>
       <input id="tera1" type="text" class="flex-1 bg-transparent px-2 text-sm placeholder:text-white/30 outline-none" placeholder="TeraBox Link 1"/>
       <button onclick="pasteTo('tera1')" class="px-3 h-full bg-blue-600/30 hover:bg-blue-600 text-xs font-semibold">Paste</button>
     </div>
 
+    <!-- Box 2 -->
     <div class="h-12 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center overflow-hidden">
       <span class="px-3 text-pink-500 font-bold text-sm">#2</span>
       <input id="tera2" type="text" class="flex-1 bg-transparent px-2 text-sm placeholder:text-white/30 outline-none" placeholder="TeraBox Link 2"/>
       <button onclick="pasteTo('tera2')" class="px-3 h-full bg-blue-600/30 hover:bg-blue-600 text-xs font-semibold">Paste</button>
     </div>
 
+    <!-- Box 3 -->
     <div class="h-12 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center overflow-hidden">
       <span class="px-3 text-pink-500 font-bold text-sm">#3</span>
       <input id="tera3" type="text" class="flex-1 bg-transparent px-2 text-sm placeholder:text-white/30 outline-none" placeholder="TeraBox Link 3"/>
       <button onclick="pasteTo('tera3')" class="px-3 h-full bg-blue-600/30 hover:bg-blue-600 text-xs font-semibold">Paste</button>
     </div>
 
+    <!-- Box 4 -->
     <div class="h-12 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center overflow-hidden">
       <span class="px-3 text-pink-500 font-bold text-sm">#4</span>
       <input id="tera4" type="text" class="flex-1 bg-transparent px-2 text-sm placeholder:text-white/30 outline-none" placeholder="TeraBox Link 4"/>
@@ -62,11 +67,13 @@ video { width: 100%; height: 100%; object-fit: contain; background: black; }
     </div>
   </div>
 
-  <button onclick="processAllFour()" class="w-full h-14 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl font-bold shadow-lg text-lg active:scale-98 transition-all">
+  <!-- PROCESS ALL BUTTON -->
+  <button onclick="processAllFour()" class="w-full h-14 bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl font-bold shadow-lg text-lg active:scale-95 transition-all">
     🚀 PROCESS & POST ALL 4 LINKS NOW
   </button>
 
-  <div class="bg-[#111] border border-white/10 rounded-xl p-4 text-xs font-mono text-gray-300 min-h-[120px]" id="statusLog">
+  <!-- STATUS MONITOR LOG -->
+  <div class="bg-[#111] border border-white/10 rounded-xl p-4 text-xs font-mono text-gray-300 min-h-[140px] max-h-[300px] overflow-y-auto" id="statusLog">
     ⚡ System ready. Paste up to 4 links and click Process.
   </div>
 
@@ -85,7 +92,9 @@ const linkSupabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const linkSupabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 const linkClient = supabase.createClient(linkSupabaseUrl, linkSupabaseKey);
 
-// ================= UTILITIES =================
+// High-speed fallback poster if video frame extraction is blocked by browser CORS
+const DEFAULT_POSTER = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800&auto=format&fit=crop&q=80";
+
 function log(msg) {
   const statusLog = document.getElementById("statusLog");
   statusLog.innerHTML += `<br>> ${msg}`;
@@ -118,7 +127,7 @@ async function uploadThumbToMyHost(base64Image) {
     const { data } = imageClient.storage.from('images').getPublicUrl(fileName);
     return data.publicUrl;
   } catch (err) {
-    console.error(err);
+    console.error("Upload Error:", err);
     return null;
   }
 }
@@ -127,11 +136,10 @@ async function uploadThumbToMyHost(base64Image) {
 async function processSingleLink(link, index) {
   if (!link) return;
 
-  log(`[Link #${index}] Starting verification...`);
-
+  log(`[Link #${index}] Verifying database...`);
   const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(link);
 
-  // Check if link was already sent
+  // 1. Check duplicate
   const { data: existing } = await linkClient
     .from("links")
     .select("short_code")
@@ -139,82 +147,87 @@ async function processSingleLink(link, index) {
     .maybeSingle();
 
   if (existing) {
-    log(`[Link #${index}] ⚠️ Skipped: Already sent earlier.`);
+    log(`[Link #${index}] ⚠️ Skipped: Link already posted!`);
     return;
   }
+
+  // 2. Short Code Create
+  const code = Math.random().toString(36).slice(2, 8);
+  await linkClient.from("links").insert([{
+    long_url: shareLink,
+    short_code: code
+  }]);
+  const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
+
+  log(`[Link #${index}] Creating preview thumbnail...`);
 
   // Stream URL
   const streamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
     encodeURIComponent(link) +
     "&index=0&quality=360p";
 
-  // Create temporary invisible video element for fast frame grab
-  const v = document.createElement("video");
-  v.src = streamUrl;
-  v.crossOrigin = "anonymous";
-  v.muted = true;
-  v.playsInline = true;
+  let finalPhotoUrl = DEFAULT_POSTER;
 
-  return new Promise((resolve) => {
-    v.addEventListener("loadeddata", async () => {
-      try {
-        log(`[Link #${index}] Frame loaded, extracting thumbnail...`);
-        const canvas = document.createElement("canvas");
-        canvas.width = 400; // Small size for hyper-fast encoding
-        canvas.height = 225;
-        const ctx = canvas.getContext("2d", { alpha: false });
-        ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+  // Try extracting frame fast
+  try {
+    const v = document.createElement("video");
+    v.src = streamUrl;
+    v.crossOrigin = "anonymous";
+    v.muted = true;
+    v.playsInline = true;
 
-        const base64 = canvas.toDataURL("image/jpeg", 0.5).split(",")[1];
-        
-        // Upload thumbnail
-        const thumbUrl = await uploadThumbToMyHost(base64);
-        if (!thumbUrl) {
-          log(`[Link #${index}] ❌ Upload failed.`);
-          resolve();
-          return;
+    await new Promise((res) => {
+      const timeout = setTimeout(() => res(), 3000); // 3-second hard limit to prevent stalling
+      
+      v.onloadeddata = async () => {
+        clearTimeout(timeout);
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = 480;
+          canvas.height = 270;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+          const base64 = canvas.toDataURL("image/jpeg", 0.6).split(",")[1];
+          const uploaded = await uploadThumbToMyHost(base64);
+          if (uploaded) finalPhotoUrl = uploaded;
+        } catch(e) {
+          log(`[Link #${index}] CORS Canvas restricted. Switching to fast poster.`);
         }
+        res();
+      };
+      
+      v.onerror = () => {
+        clearTimeout(timeout);
+        res();
+      };
+      
+      v.load();
+    });
+  } catch(e) {
+    console.log(e);
+  }
 
-        // Generate Shortcode
-        const code = Math.random().toString(36).slice(2, 8);
-        await linkClient.from("links").insert([{
-          long_url: shareLink,
-          short_code: code
-        }]);
-
-        const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
-
-        // Post to Telegram
-        await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            photo: thumbUrl,
-            caption: `🎬 Watch video #${index} for FREE!\n\n▶️ Tap the button below to play instantly`,
-            reply_markup: {
-              inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
-            }
-          })
-        });
-
-        log(`[Link #${index}] ✅ Sent to Telegram successfully!`);
-      } catch (err) {
-        log(`[Link #${index}] ❌ Error processing video frame.`);
-      } finally {
-        v.remove();
-        resolve();
+  // 3. Telegram Send (Guaranteed Delivery)
+  log(`[Link #${index}] Sending to Telegram...`);
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: finalPhotoUrl,
+      caption: `🎬 Watch video #${index} for FREE!\n\n▶️ Tap the button below to play instantly`,
+      reply_markup: {
+        inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
       }
-    });
-
-    v.addEventListener("error", () => {
-      log(`[Link #${index}] ❌ Stream failed to load.`);
-      v.remove();
-      resolve();
-    });
-
-    v.load();
+    })
   });
+
+  const tgResult = await res.json();
+  if (tgResult.ok) {
+    log(`[Link #${index}] ✅ Successfully posted to Telegram!`);
+  } else {
+    log(`[Link #${index}] ❌ Telegram Error: ${tgResult.description}`);
+  }
 }
 
 // ================= BATCH PROCESS ALL 4 LINKS =================
@@ -231,13 +244,15 @@ async function processAllFour() {
     return;
   }
 
-  document.getElementById("statusLog").innerHTML = "🚀 Starting parallel processing...";
+  document.getElementById("statusLog").innerHTML = "🚀 Starting auto-broadcast engine...";
 
-  // Parallel processing using Promise.all for maximum speed
-  const tasks = links.map((link, i) => processSingleLink(link, i + 1));
-  await Promise.all(tasks);
+  for (let i = 0; i < links.length; i++) {
+    if (links[i]) {
+      await processSingleLink(links[i], i + 1);
+    }
+  }
 
-  log("🎉 ALL TASKS COMPLETED!");
+  log("🎉 PROCESS COMPLETED!");
 }
 </script>
 
