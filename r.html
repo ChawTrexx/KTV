@@ -266,7 +266,7 @@ button:active{
 
   <div class="progress-wrap">
     <div class="circle" id="circle">
-      <div id="count">10</div>
+      <div id="count">5</div>
     </div>
   </div>
 
@@ -336,7 +336,7 @@ async function load(){
 
   finalUrl = data.long_url;
 
-  let time = 10;
+  let time = 5;
 
   const count = document.getElementById("count");
   const circle = document.getElementById("circle");
@@ -348,7 +348,7 @@ async function load(){
 
     count.innerText = time;
 
-    let deg = (time / 10) * 360;
+    let deg = (time / 5) * 360;
 
     circle.style.background =
     `conic-gradient(
