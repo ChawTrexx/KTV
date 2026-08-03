@@ -179,8 +179,9 @@ const chatId = "-1001966599723";
 
 // ================= SUPABASE CONFIG =================
 const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
-const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
-const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
+const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3TSUzMjcxLCJleHAiOjIxMDEzMjkyNzF9.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+// Note: Fix the key string format properly if needed, keeping your exact keys
+const imageClient = supabase.createClient(imgHostUrl, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk");
 
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjEwMTMyOTI3MX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
@@ -355,6 +356,15 @@ async function processQueueNext() {
   } else {
     btnText.innerText = "ALL SENT TO TELEGRAM! ✅";
     showStatus("🎉 All Uploaded & Posted Successfully! ✅", true);
+
+    // --- YAHAN SAARAY INPUT BOXES CLEAR HO JAYENGE ---
+    for (let i = 0; i < 10; i++) {
+      const inputEl = document.getElementById(`teraInput${i}`);
+      if (inputEl) inputEl.value = "";
+      videoStates[i].link = "";
+      videoStates[i].thumbnailDone = false;
+    }
+
     setTimeout(() => {
       btnText.innerText = "GENERATE & POST TO TELEGRAM";
       document.getElementById("statusBanner").classList.add("hidden");
