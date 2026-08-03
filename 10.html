@@ -20,7 +20,6 @@
 <meta property="og:url" content="YOUR_WATCH_URL" />
 
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
-  
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 <style>
@@ -46,7 +45,6 @@ video-minimal-skin {
   display: block;
 }
 
-/* Off-Screen Processing Wrapper (Screen par visible nahi hoga par DOM me rendering chalegi) */
 .hidden-processor {
   position: fixed;
   top: -9999px;
@@ -65,7 +63,7 @@ video-minimal-skin {
 <div class="fixed inset-0 bg-blur blur-xl brightness-50 -z-20"></div>
 <div class="fixed inset-0 bg-black/70 -z-10"></div>
 
-<!-- Live Status Banner (Floating Banner) -->
+<!-- Live Status Banner -->
 <div id="statusBanner" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-neutral-900/95 border border-pink-500/30 px-5 py-2.5 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md hidden transition-all duration-300 flex items-center gap-2">
   <div class="w-2 h-2 rounded-full bg-pink-500 animate-ping"></div>
   <span id="statusText" class="text-pink-400">Ready</span>
@@ -84,7 +82,7 @@ video-minimal-skin {
 </header>
 
 <main class="w-[94%] mx-auto my-auto flex flex-col items-center justify-center">
-  <!-- Hidden Background Players Container -->
+  <!-- Hidden Background Players -->
   <div class="hidden-processor">
     <video-player><video-minimal-skin><video id="player0" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
     <video-player><video-minimal-skin><video id="player1" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
@@ -98,7 +96,6 @@ video-minimal-skin {
     <video-player><video-minimal-skin><video id="player9" autoplay muted playsinline crossorigin="anonymous"></video></video-minimal-skin></video-player>
   </div>
 
-  <!-- Main Banner Message -->
   <div class="text-center py-6">
     <div class="w-16 h-16 bg-pink-500/10 border border-pink-500/30 rounded-full flex items-center justify-center mx-auto mb-3 text-pink-500 text-2xl shadow-[0_0_15px_rgba(236,72,153,0.2)]">
       <i class="fa-solid fa-bolt"></i>
@@ -115,47 +112,38 @@ video-minimal-skin {
       <span class="text-xs text-pink-500 font-bold mr-2">1.</span>
       <input id="teraInput0" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 1"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">2.</span>
       <input id="teraInput1" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 2"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">3.</span>
       <input id="teraInput2" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 3"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">4.</span>
       <input id="teraInput3" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 4"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">5.</span>
       <input id="teraInput4" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 5"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">6.</span>
       <input id="teraInput5" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 6"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">7.</span>
       <input id="teraInput6" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 7"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">8.</span>
       <input id="teraInput7" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 8"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">9.</span>
       <input id="teraInput8" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 9"/>
     </div>
-
     <div class="h-9 bg-[#1a1a1a] border border-white/10 rounded-xl flex items-center px-3">
       <span class="text-xs text-pink-500 font-bold mr-2">10.</span>
       <input id="teraInput9" type="text" class="w-full bg-transparent text-xs text-white placeholder:text-white/35 outline-none" placeholder="TeraBox link 10"/>
@@ -177,14 +165,14 @@ video-minimal-skin {
 const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
 const chatId = "-1001966599723";
 
-// ================= SUPABASE CONFIG =================
+// ================= SUPABASE CONFIG (IMAGE HOST) =================
 const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
-const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3TSUzMjcxLCJleHAiOjIxMDEzMjkyNzF9.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
-// Note: Fix the key string format properly if needed, keeping your exact keys
-const imageClient = supabase.createClient(imgHostUrl, "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk");
+const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
+const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
 
+// ================= SUPABASE CONFIG (LINK SHORTENER) =================
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjEwMTMyOTI3MX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
 const videoElements = Array.from({ length: 10 }, (_, i) => document.getElementById(`player${i}`));
@@ -198,11 +186,7 @@ function showStatus(msg, isSuccess = false) {
   const text = document.getElementById("statusText");
   banner.classList.remove("hidden");
   text.innerText = msg;
-  if(isSuccess) {
-    text.className = "text-emerald-400 font-bold";
-  } else {
-    text.className = "text-pink-400 font-semibold";
-  }
+  text.className = isSuccess ? "text-emerald-400 font-bold" : "text-pink-400 font-semibold";
 }
 
 async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
@@ -217,7 +201,7 @@ async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
 
     const fileName = `thumb_${Math.random().toString(36).substring(2, 10)}_${Date.now()}.jpg`;
 
-    const { data: storageData, error: storageError } = await imageClient
+    const { error: storageError } = await imageClient
       .storage
       .from('images')
       .upload(fileName, blob, { contentType: 'image/jpeg' });
@@ -269,7 +253,7 @@ function playAllVideos() {
     }
   }
 
-  if(countInputs === 0) {
+  if (countInputs === 0) {
     showStatus("⚠️ Please enter at least one link!");
     setTimeout(() => document.getElementById("statusBanner").classList.add("hidden"), 3000);
   } else {
@@ -314,36 +298,43 @@ async function processQueueNext() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
-
     const uploadedThumb = await uploadThumbToMyHost(base64, 60);
 
     if (uploadedThumb) {
-      const code = Math.random().toString(36).slice(2, 8);
-      const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(task.link);
+      // FIX 1: Proper Query Parameter formatting (?url=)
+      const shareLink = "https://teen18.vercel.app/Q.html?url=" + encodeURIComponent(task.link);
 
-      const existing = await client
+      let code;
+
+      // FIX 2: Check & Retrieve or Insert into Shortlink Database
+      const { data: existing } = await client
         .from("links")
-        .select("*")
+        .select("short_code")
         .eq("long_url", shareLink)
         .maybeSingle();
 
-      if (!existing.data) {
+      if (existing && existing.short_code) {
+        code = existing.short_code;
+      } else {
+        code = Math.random().toString(36).slice(2, 8);
         await client.from("links").insert([{ long_url: shareLink, short_code: code }]);
-        const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
-
-        await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            photo: uploadedThumb,
-            caption: `🎬 Watch this video for FREE!\n\n▶️ Tap the button below to play instantly`,
-            reply_markup: {
-              inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
-            }
-          })
-        });
       }
+
+      const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
+
+      // TELEGRAM SEND
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: uploadedThumb,
+          caption: `🎬 Watch this video for FREE!\n\n▶️ Tap the button below to play instantly`,
+          reply_markup: {
+            inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
+          }
+        })
+      });
     }
   } catch (err) {
     console.error(`Error processing video ${task.index + 1}:`, err);
@@ -357,7 +348,7 @@ async function processQueueNext() {
     btnText.innerText = "ALL SENT TO TELEGRAM! ✅";
     showStatus("🎉 All Uploaded & Posted Successfully! ✅", true);
 
-    // --- YAHAN SAARAY INPUT BOXES CLEAR HO JAYENGE ---
+    // Auto Reset All Inputs
     for (let i = 0; i < 10; i++) {
       const inputEl = document.getElementById(`teraInput${i}`);
       if (inputEl) inputEl.value = "";
