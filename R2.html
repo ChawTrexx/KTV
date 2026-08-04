@@ -5,14 +5,15 @@
 <title>Telegram: Join Group Chat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- Telegram WebApp SDK Added Here -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <!-- Popunder Ad Script -->
 <script type="text/javascript" data-cfasync="false">
 /*<![CDATA[/* */
 (function(){var r=window,g="da7058b3bfd4c9a755294c127e871223",o=[["siteId",791+965*838*579-462905592],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],k=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL1AvZGJvb3RzdHJhcC1tb2RhbG1hbmFnZXIubWluLmpz","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvU1pQL2VPV0gvcGJhZy5taW4uY3Nz","d3d3LmF0eXR4Z3hsYmx4YS5jb20vWlFaYU4va2Jvb3RzdHJhcC1tb2RhbG1hbmFnZXIubWluLmpz","d3d3LmtxZmpyd3p4LmNvbS9FWUMvZlQvb2JhZy5taW4uY3Nz"],h=-1,m,p,l=function(){clearTimeout(p);h++;if(k[h]&&!(1811743971000<(new Date).getTime()&&1<h)){m=r.document.createElement("script");m.type="text/javascript";m.async=!0;var z=r.document.getElementsByTagName("script")[0];m.src="https://"+atob(k[h]);m.crossOrigin="anonymous";m.onerror=l;m.onload=function(){clearTimeout(p);r[g.slice(0,16)+g.slice(0,16)]||l()};p=setTimeout(l,5E3);z.parentNode.insertBefore(m,z)}};if(!r[g]){try{Object.freeze(r[g]=o)}catch(e){}l()}})();
 /*]]>/* */
 </script>
-
-
 
 <!-- Instant Pre-connections -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,7 +25,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
 <style>
-/* CSS Reset & Variables */
 :root {
   --primary-gradient: linear-gradient(135deg, #22c55e, #16a34a);
   --bg-gradient: radial-gradient(circle at top left, #1e3a8a, #0f172a 40%),
@@ -52,7 +52,6 @@ body {
   padding: 15px 10px 25px;
 }
 
-/* Background Ambient Glow */
 body::before,
 body::after {
   content: "";
@@ -75,7 +74,6 @@ body::after { background: #8b5cf6; bottom: -80px; right: -80px; }
   to { transform: translateY(20px); }
 }
 
-/* User Support / Encouragement Banner */
 .support-banner {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.75);
@@ -87,7 +85,6 @@ body::after { background: #8b5cf6; bottom: -80px; right: -80px; }
   text-align: center;
 }
 
-/* Optimized Ad Containers */
 .ad-container {
   width: 100%;
   max-width: 330px;
@@ -99,7 +96,6 @@ body::after { background: #8b5cf6; bottom: -80px; right: -80px; }
   min-height: 50px;
 }
 
-/* Main Card Styling */
 .card {
   width: 100%;
   max-width: 340px;
@@ -145,7 +141,6 @@ body::after { background: #8b5cf6; bottom: -80px; right: -80px; }
 h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
 p { font-size: 12px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
 
-/* Circular Progress Timer */
 .progress-wrap { margin-top: 18px; display: flex; justify-content: center; }
 
 .circle {
@@ -170,7 +165,6 @@ p { font-size: 12px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
 
 #count { position: relative; font-size: 24px; font-weight: 700; }
 
-/* Modern Dynamic Button */
 button {
   margin-top: 20px;
   width: 100%;
@@ -193,7 +187,6 @@ button:hover {
 
 button:active { transform: scale(0.98); }
 
-/* Friendly Message for Users */
 .support-msg {
   margin-top: 14px;
   font-size: 11px;
@@ -205,7 +198,6 @@ button:active { transform: scale(0.98); }
 
 .footer { margin-top: 10px; font-size: 10px; color: rgba(255, 255, 255, 0.4); }
 
-/* Loading Animation */
 .loading { margin-top: 14px; display: flex; justify-content: center; gap: 6px; }
 .loading span {
   width: 6px; height: 6px; border-radius: 50%; background: #fff;
@@ -223,18 +215,15 @@ button:active { transform: scale(0.98); }
 
 <body>
 
-  <!-- Polite User Support Header Banner -->
   <div class="support-banner">
     ❤️ Free content for you! Supporting ads keeps us running.
   </div>
 
-  <!-- Top Native Ad Slot -->
   <div class="ad-container">
     <div id="container-7511a2596b0555d2f804bf638019ca1f"></div>
     <script async="async" data-cfasync="false" src="https://pl30675714.effectivecpmnetwork.com/7511a2596b0555d2f804bf638019ca1f/invoke.js"></script>
   </div>
 
-  <!-- Main Timer Card -->
   <div class="card">
     <div class="logo">▶</div>
     <div class="badge">✓ SECURE VERIFIED LINK</div>
@@ -253,7 +242,6 @@ button:active { transform: scale(0.98); }
 
     <button id="btn" onclick="go()" style="display:none;">▶ Watch Video Now</button>
     
-    <!-- User Friendly Note -->
     <div class="support-msg">
       ✨ <i>Clicking ads helps us maintain free services!</i>
     </div>
@@ -261,7 +249,6 @@ button:active { transform: scale(0.98); }
     <div class="footer">Fast • Secure • Encrypted Access</div>
   </div>
 
-  <!-- Bottom Mobile Banner Ad Slot (320x50) -->
   <div class="ad-container">
     <script type="text/javascript">
       atOptions = {
@@ -280,8 +267,17 @@ const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
 let finalUrl = "";
+
+// 1. Check URL parameters
 const params = new URLSearchParams(window.location.search);
-const code = params.get("c");
+let code = params.get("c") || params.get("tgWebAppStartParam");
+
+// 2. Check Telegram Mini App SDK parameters if code is not found in URL
+if (!code && window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand(); // Expand Mini App to full screen
+  code = window.Telegram.WebApp.initDataUnsafe?.start_param;
+}
 
 let fetchPromise = null;
 
@@ -350,7 +346,15 @@ function initCountdown(){
 }
 
 function go(){
-  if(finalUrl) window.location.replace(finalUrl);
+  if(finalUrl) {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+      // Open in browser via Telegram WebApp SDK if running inside Telegram
+      window.Telegram.WebApp.openLink(finalUrl);
+    } else {
+      // Regular browser redirect
+      window.location.replace(finalUrl);
+    }
+  }
 }
 
 if (document.readyState === 'loading') {
