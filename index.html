@@ -12,6 +12,7 @@
   
 
 <!-- telegram ads -->
+  <script src='//libtl.com/sdk.js' data-zone='11501408' data-sdk='show_11501408'></script>
   
   
 <!-- Pre-connections & Fonts -->
@@ -94,24 +95,40 @@ input:disabled {
 
 
 <!-- ADS CONTAINER -->
-<script>
-show_11501408({
-  type: 'inApp',
-  inAppSettings: {
-    frequency: 2,
-    capping: 0.1,
-    interval: 30,
-    timeout: 5,
-    everyPage: false
-  }
-});
-</script>
+
 
 <script>
-window.onload = function () {
-  show_11501408('pop')
-    .catch(() => {});
-};
+window.addEventListener("load", async function () {
+
+    // 1. Rewarded Interstitial
+    try {
+        await show_11501408();
+        console.log("Rewarded Interstitial completed");
+    } catch (e) {
+        console.log("Rewarded Interstitial skipped");
+    }
+
+    // 2. Rewarded Popup
+    try {
+        await show_11501408("pop");
+        console.log("Rewarded Popup completed");
+    } catch (e) {
+        console.log("Rewarded Popup skipped");
+    }
+
+    // 3. In-App Interstitial
+    show_11501408({
+        type: "inApp",
+        inAppSettings: {
+            frequency: 2,
+            capping: 0.1,
+            interval: 30,
+            timeout: 5,
+            everyPage: false
+        }
+    });
+
+});
 </script>
 
 
