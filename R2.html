@@ -188,18 +188,11 @@ input:disabled {
 <script>
 // CONFIGURATIONS
 const telegramChannelLink = "https://t.me/+3ToK2PMw5YowNDY9"; 
-const botToken = "6634953218:AAEOaozrPHqv2Xs7uJ7L-xcStHKqee0fi1Q";
-const chatId = "-1001966599723";
 
-// SUPABASE CONFIG (Shortener)
+// SUPABASE CONFIG (Shortener Read-Only)
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 const client = supabase.createClient(supabaseUrl, supabaseKey);
-
-// SUPABASE CONFIG (Image Host)
-const imgHostUrl = "https://askvmuxefttgqvnnalod.supabase.co";
-const imgHostAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFza3ZtdXhlZnR0Z3F2bm5hbG9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU3NTMyNzEsImV4cCI6MjEwMTMyOTI3MX0.ImEDrU-D_M7A-wgZSAvLK8lSAj76YUza-WPdFkRaGQk";
-const imageClient = supabase.createClient(imgHostUrl, imgHostAnonKey);
 
 // ELEMENTS
 const video = document.getElementById("player");
@@ -212,10 +205,6 @@ const headerSection = document.getElementById("headerSection");
 const teraInput = document.getElementById("teraInput");
 const playBtn = document.getElementById("playBtn");
 const statusDesc = document.getElementById("statusDesc");
-
-let currentTeraLink = "";
-let uploadedThumb = "";
-let thumbnailDone = false;
 
 // 1. INITIALIZE ON LOAD
 window.addEventListener("DOMContentLoaded", async () => {
@@ -275,10 +264,6 @@ function playMedia(link) {
 
   showLoader("Preparing video stream...");
 
-  currentTeraLink = link;
-  uploadedThumb = "";
-  thumbnailDone = false;
-
   const streamUrl = "https://1024teradownloader.in/api/video-stream?url=" +
       encodeURIComponent(link) + "&index=0&quality=360p";
 
@@ -315,98 +300,6 @@ video.addEventListener("canplay", () => {
   mediaContainer.style.setProperty("display", "flex", "important");
   video.play().catch(err => console.log("Autoplay blocked:", err));
 });
-
-video.addEventListener("loadeddata", () => {
-  setTimeout(() => {
-    if (video.duration) video.currentTime = Math.min(3, video.duration / 2);
-  }, 1000);
-});
-
-// SEEK & DUPLICATE CHECK LOGIC
-video.addEventListener("seeked", async () => {
-  if (thumbnailDone) return;
-  thumbnailDone = true;
-
-  try {
-    const shareLink = "https://teen18.vercel.app/R2.html?=" + encodeURIComponent(currentTeraLink);
-
-    // 1. Check if this exact long_url already exists in the database
-    const { data: existingData, error: queryError } = await client
-      .from("links")
-      .select("long_url")
-      .eq("long_url", shareLink)
-      .maybeSingle();
-
-    // Agar database mein link pehle se maujud hai, toh aage kuch mat karo (No Upload, No Telegram Send)
-    if (existingData) {
-      console.log("Link already exists in database. Skipping upload and Telegram notification.");
-      return;
-    }
-
-    // 2. Agar database me nahi hai, tabhi image capture/upload karo
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 360;
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    const base64 = canvas.toDataURL("image/jpeg", 0.8).split(",")[1];
-    uploadedThumb = await uploadThumbToMyHost(base64, 60);
-
-    if (uploadedThumb) {
-      const code = Math.random().toString(36).slice(2, 8);
-
-      // Database mein insert karo
-      await client.from("links").insert([{ long_url: shareLink, short_code: code }]);
-      const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
-
-      // Telegram par send karo
-      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: chatId,
-          photo: uploadedThumb,
-          caption: `🎬 Watch this video for FREE!\n\n▶️ Tap below to play directly`,
-          reply_markup: {
-            inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
-          }
-        })
-      });
-
-      console.log("New link processed and sent to Telegram successfully!");
-    }
-  } catch (err) {
-    console.error("Duplicate check / Telegram generation failed:", err);
-  }
-});
-
-async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
-  try {
-    const byteCharacters = atob(base64Image);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const blob = new Blob([new Uint8Array(byteNumbers)], { type: 'image/jpeg' });
-    const fileName = `thumb_${Math.random().toString(36).substring(2, 10)}_${Date.now()}.jpg`;
-
-    const { error: storageError } = await imageClient.storage.from('images').upload(fileName, blob, { contentType: 'image/jpeg' });
-    if (storageError) throw storageError;
-
-    const { data: publicUrlData } = imageClient.storage.from('images').getPublicUrl(fileName);
-    const expiresAt = new Date(Date.now() + expirationSec * 1000).toISOString();
-
-    await imageClient.from('uploads').insert([{
-      file_path: fileName,
-      delete_token: Math.random().toString(36).substring(2, 12),
-      expires_at: expiresAt
-    }]);
-
-    return publicUrlData.publicUrl;
-  } catch (err) {
-    return null;
-  }
-}
 
 function showLoader(msg) {
   loaderText.innerText = msg;
