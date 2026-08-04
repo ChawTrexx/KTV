@@ -7,7 +7,7 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9710005261769840"
      crossorigin="anonymous"></script>
 
-
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
@@ -283,18 +283,23 @@ function playVideo() {
     video.load();
 }
 
-// ================= AUTO PLAY FROM URL =================
+// ================= AUTO PLAY FROM URL / TELEGRAM =================
 window.addEventListener("DOMContentLoaded", () => {
     let link = "";
-    if (location.search.startsWith("?=")) {
+
+    // Telegram Mini App
+    if (window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+        link = decodeURIComponent(window.Telegram.WebApp.initDataUnsafe.start_param);
+    }
+
+    // Normal website
+    else if (location.search.startsWith("?=")) {
         link = decodeURIComponent(location.search.substring(2));
     }
 
     if (link) {
         teraInput.value = link;
-        setTimeout(() => {
-            playVideo();
-        }, 300);
+        setTimeout(playVideo, 300);
     }
 });
 
