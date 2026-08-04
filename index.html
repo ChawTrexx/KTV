@@ -310,7 +310,8 @@ function playMedia(link) {
 
   video.pause();
   video.removeAttribute("src");
-  video.muted = true;
+  video.muted = false;
+video.volume = 1;
   video.autoplay = true;
   video.playsInline = true;
   video.src = streamUrl;
