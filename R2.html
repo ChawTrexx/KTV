@@ -217,7 +217,7 @@ let currentTeraLink = "";
 let uploadedThumb = "";
 let thumbnailDone = false;
 
-// 1. INITIALIZE ON LOAD (CHECK TELEGRAM & SHORTCODE FIRST)
+// 1. INITIALIZE ON LOAD
 window.addEventListener("DOMContentLoaded", async () => {
   if (window.Telegram && window.Telegram.WebApp) {
     window.Telegram.WebApp.ready();
@@ -231,7 +231,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     code = window.Telegram.WebApp.initDataUnsafe.start_param;
   }
 
-  // Case A: Short Code provided -> Resolve URL from Supabase
   if (code) {
     showLoader("Fetching link details...");
     try {
@@ -257,7 +256,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       statusDesc.innerText = "Error fetching short code.";
     }
   } 
-  // Case B: Direct link in URL parameter (?=https://...)
   else if (location.search.startsWith("?=")) {
     const directLink = decodeURIComponent(location.search.substring(2));
     teraInput.value = directLink;
@@ -265,13 +263,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// MANUAL PLAY BUTTON TRIGGER
 function manualPlay() {
   const link = teraInput.value.trim();
   if (link) playMedia(link);
 }
 
-// MAIN PLAYBACK LOGIC
 function playMedia(link) {
   teraInput.disabled = true;
   playBtn.disabled = true;
@@ -295,7 +291,6 @@ function playMedia(link) {
   video.load();
 }
 
-// VIDEO READY EVENT
 video.addEventListener("canplay", () => {
   hideLoader();
 
@@ -321,18 +316,34 @@ video.addEventListener("canplay", () => {
   video.play().catch(err => console.log("Autoplay blocked:", err));
 });
 
-// SEEK & THUMBNAIL LOGIC
 video.addEventListener("loadeddata", () => {
   setTimeout(() => {
     if (video.duration) video.currentTime = Math.min(3, video.duration / 2);
   }, 1000);
 });
 
+// SEEK & DUPLICATE CHECK LOGIC
 video.addEventListener("seeked", async () => {
   if (thumbnailDone) return;
   thumbnailDone = true;
 
   try {
+    const shareLink = "https://teen18.vercel.app/R2.html?=" + encodeURIComponent(currentTeraLink);
+
+    // 1. Check if this exact long_url already exists in the database
+    const { data: existingData, error: queryError } = await client
+      .from("links")
+      .select("long_url")
+      .eq("long_url", shareLink)
+      .maybeSingle();
+
+    // Agar database mein link pehle se maujud hai, toh aage kuch mat karo (No Upload, No Telegram Send)
+    if (existingData) {
+      console.log("Link already exists in database. Skipping upload and Telegram notification.");
+      return;
+    }
+
+    // 2. Agar database me nahi hai, tabhi image capture/upload karo
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 360;
@@ -343,38 +354,32 @@ video.addEventListener("seeked", async () => {
 
     if (uploadedThumb) {
       const code = Math.random().toString(36).slice(2, 8);
-      const shareLink = "https://teen18.vercel.app/Q.html?=" + encodeURIComponent(currentTeraLink);
 
-      const { data: existing } = await client
-        .from("links")
-        .select("*")
-        .eq("long_url", shareLink)
-        .maybeSingle();
+      // Database mein insert karo
+      await client.from("links").insert([{ long_url: shareLink, short_code: code }]);
+      const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
 
-      if (!existing) {
-        await client.from("links").insert([{ long_url: shareLink, short_code: code }]);
-        const shortUrl = "https://short-terabox-link.vercel.app/r.html?c=" + code;
+      // Telegram par send karo
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: uploadedThumb,
+          caption: `🎬 Watch this video for FREE!\n\n▶️ Tap below to play directly`,
+          reply_markup: {
+            inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
+          }
+        })
+      });
 
-        await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            photo: uploadedThumb,
-            caption: `🎬 Watch this video for FREE!\n\n▶️ Tap below to play directly`,
-            reply_markup: {
-              inline_keyboard: [[{ text: "👉 Play Online Free 👅💦", url: shortUrl }]]
-            }
-          })
-        });
-      }
+      console.log("New link processed and sent to Telegram successfully!");
     }
   } catch (err) {
-    console.error("Thumbnail/Telegram generation failed:", err);
+    console.error("Duplicate check / Telegram generation failed:", err);
   }
 });
 
-// IMAGE UPLOAD HELPER
 async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
   try {
     const byteCharacters = atob(base64Image);
@@ -403,7 +408,6 @@ async function uploadThumbToMyHost(base64Image, expirationSec = 60) {
   }
 }
 
-// UI HELPERS
 function showLoader(msg) {
   loaderText.innerText = msg;
   loaderCard.style.setProperty("display", "flex", "important");
