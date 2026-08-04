@@ -5,21 +5,18 @@
 <title>Telegram: Join Group Chat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
+<!-- Popunder Ad Script -->
 <script type="text/javascript" data-cfasync="false">
 /*<![CDATA[/* */
 (function(){var a=window,m="da7058b3bfd4c9a755294c127e871223",e=[["siteId",865+218-611*362*279+67023824],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],o=["d3d3LmRpc3BsYXl2ZXJ0aXNpbmcuY29tL3drUVhKei9hYm9vdHN0cmFwLW1vZGFsbWFuYWdlci5taW4uanM=","ZDNtem9rdHk5NTFjNXcuY2xvdWRmcm9udC5uZXQvTlAvdmxTL3ViYWcubWluLmNzcw==","d3d3Lm50Y2ZrY21lcy5jb20vUkNvRy9yYm9vdHN0cmFwLW1vZGFsbWFuYWdlci5taW4uanM=","d3d3Lm5seGR0aXhpYmdvaGIuY29tL2t3Wi96RWpYQWgvcmJhZy5taW4uY3Nz"],z=-1,n,w,b=function(){clearTimeout(w);z++;if(o[z]&&!(1811732469000<(new Date).getTime()&&1<z)){n=a.document.createElement("script");n.type="text/javascript";n.async=!0;var v=a.document.getElementsByTagName("script")[0];n.src="https://"+atob(o[z]);n.crossOrigin="anonymous";n.onerror=b;n.onload=function(){clearTimeout(w);a[m.slice(0,16)+m.slice(0,16)]||b()};w=setTimeout(b,5E3);v.parentNode.insertBefore(n,v)}};if(!a[m]){try{Object.freeze(a[m]=e)}catch(e){}b()}})();
 /*]]>/* */
 </script>
 
-  <!--ads -->
-  <script src="https://pl30675713.effectivecpmnetwork.com/7b/5c/a7/7b5ca7f7b7d671b5e8f5afd49ae3f5d2.js"></script>
-  <script async="async" data-cfasync="false" src="https://pl30675714.effectivecpmnetwork.com/7511a2596b0555d2f804bf638019ca1f/invoke.js"></script>
-<div id="container-7511a2596b0555d2f804bf638019ca1f"></div>
-  
-<!--ads -->
-  
-<!-- 1. Instant Network Pre-connections -->
+<!-- Direct/Network Ads Scripts -->
+<script src="https://pl30675713.effectivecpmnetwork.com/7b/5c/a7/7b5ca7f7b7d671b5e8f5afd49ae3f5d2.js"></script>
+<script src="https://pl30675715.effectivecpmnetwork.com/25/01/7a/25017a6d44c5de811f8b688c5b6ea558.js"></script>
+
+<!-- Instant Pre-connections -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://trdluuhqduebfipnyxlm.supabase.co" crossorigin>
@@ -37,9 +34,10 @@
 
 body{
   font-family:'Poppins', sans-serif, -apple-system, BlinkMacSystemFont;
-  height:100vh;
-  overflow:hidden;
+  min-height:100vh;
+  overflow-y:auto;
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
   background:
@@ -47,7 +45,7 @@ body{
   radial-gradient(circle at bottom right,#7c3aed,#111827 50%);
   color:white;
   position:relative;
-  contain: strict;
+  padding: 16px 0;
 }
 
 /* GPU Accelerated Ambient Glow */
@@ -63,6 +61,7 @@ body::after{
   animation:float 6s infinite alternate ease-in-out;
   will-change: transform;
   transform: translateZ(0);
+  pointer-events: none;
 }
 
 body::before{ background:#3b82f6; top:-80px; left:-80px; }
@@ -71,6 +70,18 @@ body::after{ background:#8b5cf6; bottom:-80px; right:-80px; }
 @keyframes float{
   from{ transform:translate3d(0,0,0); }
   to{ transform:translate3d(0,20px,0); }
+}
+
+/* Ad Containers Setup */
+.ad-container {
+  width: 100%;
+  max-width: 728px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 12px 0;
+  z-index: 10;
+  overflow: hidden;
 }
 
 .card{
@@ -85,7 +96,6 @@ body::after{ background:#8b5cf6; bottom:-80px; right:-80px; }
   text-align:center;
   position:relative;
   z-index:10;
-  contain: content;
 }
 
 .logo{
@@ -177,28 +187,48 @@ button:active{ transform:scale(0.98); }
 
 <body>
 
-<div class="card">
-  <div class="logo">▶</div>
-  <div class="badge">✓ SECURE VERIFIED LINK</div>
-  <h2 id="title">Preparing Your Video</h2>
-  <p id="desc">Please wait while we generate your secure access...</p>
+  <!-- Top Ad Slot -->
+  <div class="ad-container">
+    <div id="container-7511a2596b0555d2f804bf638019ca1f"></div>
+    <script async="async" data-cfasync="false" src="https://pl30675714.effectivecpmnetwork.com/7511a2596b0555d2f804bf638019ca1f/invoke.js"></script>
+  </div>
 
-  <div class="progress-wrap" id="p-wrap">
-    <div class="circle" id="circle">
-      <div id="count">5</div>
+  <!-- Main Timer Card -->
+  <div class="card">
+    <div class="logo">▶</div>
+    <div class="badge">✓ SECURE VERIFIED LINK</div>
+    <h2 id="title">Preparing Your Video</h2>
+    <p id="desc">Please wait while we generate your secure access...</p>
+
+    <div class="progress-wrap" id="p-wrap">
+      <div class="circle" id="circle">
+        <div id="count">5</div>
+      </div>
     </div>
+
+    <div class="loading" id="loading">
+      <span></span><span></span><span></span>
+    </div>
+
+    <button id="btn" onclick="go()" style="display:none;">▶ Watch Video Now</button>
+    <div class="footer">Fast • Secure • Encrypted Access</div>
   </div>
 
-  <div class="loading" id="loading">
-    <span></span><span></span><span></span>
+  <!-- Bottom Banner Ad Slot -->
+  <div class="ad-container">
+    <script>
+      atOptions = {
+        'key' : 'aaa1e24c94cd6d0cf621c150b70b36ab',
+        'format' : 'iframe',
+        'height' : 90,
+        'width' : 728,
+        'params' : {}
+      };
+    </script>
+    <script src="https://www.highperformanceformat.com/aaa1e24c94cd6d0cf621c150b70b36ab/invoke.js"></script>
   </div>
-
-  <button id="btn" onclick="go()" style="display:none;">▶ Watch Video Now</button>
-  <div class="footer">Fast • Secure • Encrypted Access</div>
-</div>
 
 <script>
-// Ultra-fast Native REST API Call (No heavy external JS Supabase library required)
 const supabaseUrl = "https://trdluuhqduebfipnyxlm.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyZGx1dWhxZHVlYmZpcG55eGxtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzgyMTUsImV4cCI6MjA5NTAxNDIxNX0.43O4uPz6Jej4-9JAtuOEt7hD7W6lPN1Z0aE6ieHfBF4";
 
@@ -206,7 +236,6 @@ let finalUrl = "";
 const params = new URLSearchParams(window.location.search);
 const code = params.get("c");
 
-// Start Database Request Immediately (Instant Parallel execution)
 let fetchPromise = null;
 
 if(code){
@@ -277,29 +306,12 @@ function go(){
   if(finalUrl) window.location.replace(finalUrl);
 }
 
-// Execute logic instantly on DOM ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initCountdown);
 } else {
   initCountdown();
 }
 </script>
-
-  <!--ads -->
-<script src="https://pl30675715.effectivecpmnetwork.com/25/01/7a/25017a6d44c5de811f8b688c5b6ea558.js"></script>
-  <script>
-  atOptions = {
-    'key' : 'aaa1e24c94cd6d0cf621c150b70b36ab',
-    'format' : 'iframe',
-    'height' : 90,
-    'width' : 728,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/aaa1e24c94cd6d0cf621c150b70b36ab/invoke.js"></script>
-  
-  
-  <!--ads -->
 
 </body>
 </html>
