@@ -72,11 +72,15 @@ input:disabled {
   opacity: 1 !important;
   color: #d1d5db !important;
   -webkit-text-fill-color: #d1d5db !important;
-}
+} 
+  .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+  }
 </style>
 </head>
 
-<body class="min-h-screen flex flex-col justify-between items-center px-4 py-6 select-none">
+<body class="min-h-screen flex flex-col justify-between items-center px-4 py-6 select-none no-select">
 
   <!-- MAIN CONTAINER -->
   <div class="w-full max-w-sm sm:max-w-md flex flex-col items-center gap-4 my-auto">
