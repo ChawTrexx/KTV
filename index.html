@@ -295,7 +295,23 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 function manualPlay() {
   const link = teraInput.value.trim();
-  if (link) playMedia(link);
+
+  // Agar video pehle se chal raha hai ya load ho chuka hai
+  if (video.src) {
+    // Agar video ruk gaya hai (pause/end)
+    if (video.paused || video.ended) {
+      location.reload();
+      return;
+    }
+
+    // Video chal raha hai, kuch mat karo
+    return;
+  }
+
+  // Pehli baar Play dabaya gaya
+  if (link) {
+    playMedia(link);
+  }
 }
 
 function playMedia(link) {
