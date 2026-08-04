@@ -97,39 +97,31 @@ input:disabled {
 <!-- ADS CONTAINER -->
 
 
+
+
 <script>
-window.addEventListener("load", async function () {
+window.addEventListener("load", function () {
 
-    // 1. Rewarded Interstitial
     try {
-        await show_11501408();
-        console.log("Rewarded Interstitial completed");
+        show_11501408({
+            type: "inApp",
+            inAppSettings: {
+                frequency: 2,       // Maximum 2 ads
+                capping: 0.1,       // 6 minutes window
+                interval: 30,       // 30 seconds gap between ads
+                timeout: 5,         // Telegram link khulte hi 5 sec baad ad aayega
+                everyPage: true     // Har naye Telegram link load par fresh start hoga
+            }
+        });
+        console.log("Ad Initialized for Fresh Link Load");
     } catch (e) {
-        console.log("Rewarded Interstitial skipped");
+        console.warn("Ad SDK Error:", e);
     }
-
-    // 2. Rewarded Popup
-    try {
-        await show_11501408("pop");
-        console.log("Rewarded Popup completed");
-    } catch (e) {
-        console.log("Rewarded Popup skipped");
-    }
-
-    // 3. In-App Interstitial
-    show_11501408({
-        type: "inApp",
-        inAppSettings: {
-            frequency: 2,
-            capping: 0.1,
-            interval: 30,
-            timeout: 5,
-            everyPage: false
-        }
-    });
 
 });
 </script>
+
+  
 
 
   
