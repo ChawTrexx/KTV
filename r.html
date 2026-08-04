@@ -33,20 +33,21 @@
 
 body{
   font-family:'Poppins', sans-serif, -apple-system, BlinkMacSystemFont;
-  min-height:100vh;
+  min-height: 100vh;
   overflow-x: hidden;
-  overflow-y:auto;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Niche shift hone se rokne ke liye */
   background:
   radial-gradient(circle at top left,#1e3a8a,#0f172a 40%),
   radial-gradient(circle at bottom right,#7c3aed,#111827 50%);
-  color:white;
-  position:relative;
-  padding: 12px 10px;
+  color: white;
+  position: relative;
+  padding: 10px 0 20px 0; /* Padding adjust ki gayi hai */
 }
+
 
 /* GPU Accelerated Ambient Glow */
 body::before,
