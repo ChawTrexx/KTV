@@ -15,8 +15,6 @@
 <!-- Direct/Network Ads Scripts -->
 <script src="https://pl30675713.effectivecpmnetwork.com/7b/5c/a7/7b5ca7f7b7d671b5e8f5afd49ae3f5d2.js"></script>
 
-  
-
 <!-- Instant Pre-connections -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,178 +25,214 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+/* CSS Reset & Variables */
+:root {
+  --primary-gradient: linear-gradient(135deg, #22c55e, #16a34a);
+  --bg-gradient: radial-gradient(circle at top left, #1e3a8a, #0f172a 40%),
+                 radial-gradient(circle at bottom right, #7c3aed, #111827 50%);
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
 }
 
-body{
-  font-family:'Poppins', sans-serif, -apple-system, BlinkMacSystemFont;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Niche shift hone se rokne ke liye */
-  background:
-  radial-gradient(circle at top left,#1e3a8a,#0f172a 40%),
-  radial-gradient(circle at bottom right,#7c3aed,#111827 50%);
-  color: white;
-  position: relative;
-  padding: 10px 0 20px 0; /* Padding adjust ki gayi hai */
+  justify-content: flex-start;
+  background: var(--bg-gradient);
+  color: #ffffff;
+  padding: 15px 10px 25px;
 }
 
-
-/* GPU Accelerated Ambient Glow */
+/* Background Ambient Glow */
 body::before,
-body::after{
-  content:"";
-  position:absolute;
-  width:250px;
-  height:250px;
-  border-radius:50%;
-  filter:blur(80px);
-  opacity:0.25;
-  animation:float 6s infinite alternate ease-in-out;
-  will-change: transform;
-  transform: translateZ(0);
+body::after {
+  content: "";
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+  animation: float 6s infinite alternate ease-in-out;
   pointer-events: none;
+  will-change: transform;
 }
 
-body::before{ background:#3b82f6; top:-80px; left:-80px; }
-body::after{ background:#8b5cf6; bottom:-80px; right:-80px; }
+body::before { background: #3b82f6; top: -80px; left: -80px; }
+body::after { background: #8b5cf6; bottom: -80px; right: -80px; }
 
-@keyframes float{
-  from{ transform:translate3d(0,0,0); }
-  to{ transform:translate3d(0,20px,0); }
+@keyframes float {
+  from { transform: translateY(0); }
+  to { transform: translateY(20px); }
 }
 
-/* Clean Ad Containers */
+/* User Support / Encouragement Banner */
+.support-banner {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Optimized Ad Containers */
 .ad-container {
   width: 100%;
-  max-width: 320px;
+  max-width: 330px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px 0;
+  margin: 8px 0;
   z-index: 10;
-  overflow: hidden;
   min-height: 50px;
 }
 
-.card{
+/* Main Card Styling */
+.card {
   width: 100%;
   max-width: 340px;
-  padding: 22px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  padding: 24px 20px;
+  border-radius: 22px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
   text-align: center;
   position: relative;
   z-index: 10;
   margin: 6px 0;
 }
 
-.logo{
-  width: 60px;
-  height: 60px;
+.logo {
+  width: 62px;
+  height: 62px;
   margin: 0 auto 12px;
-  border-radius: 16px;
-  background: linear-gradient(135deg,#22c55e,#06b6d4);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #22c55e, #06b6d4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  box-shadow: 0 8px 24px rgba(34,197,94,0.35);
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
 }
 
-.badge{
+.badge {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 4px 12px;
+  border-radius: 20px;
   font-size: 10px;
   font-weight: 600;
-  background: rgba(34,197,94,0.15);
+  background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
-  border: 1px solid rgba(74,222,128,0.3);
-  margin-bottom: 10px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
 }
 
-h2{ font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-p{ font-size: 12px; color: rgba(255,255,255,0.7); line-height: 1.4; }
+h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+p { font-size: 12px; color: rgba(255, 255, 255, 0.7); line-height: 1.5; }
 
-.progress-wrap{ margin-top: 18px; display: flex; justify-content: center; }
+/* Circular Progress Timer */
+.progress-wrap { margin-top: 18px; display: flex; justify-content: center; }
 
-.circle{
+.circle {
   width: 86px;
   height: 86px;
   border-radius: 50%;
-  background: conic-gradient(#22c55e 360deg, rgba(255,255,255,0.1) 0deg);
+  background: conic-gradient(#22c55e 360deg, rgba(255, 255, 255, 0.1) 0deg);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  will-change: background;
 }
 
-.circle::before{
+.circle::before {
   content: "";
   position: absolute;
-  width: 64px;
-  height: 64px;
+  width: 66px;
+  height: 66px;
   border-radius: 50%;
   background: #0f172a;
 }
 
-#count{ position: relative; font-size: 24px; font-weight: 700; }
+#count { position: relative; font-size: 24px; font-weight: 700; }
 
-button{
-  margin-top: 18px;
+/* Modern Dynamic Button */
+button {
+  margin-top: 20px;
   width: 100%;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-size: 14px;
   font-weight: 600;
   color: white;
   cursor: pointer;
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  transition: transform .15s ease;
-  box-shadow: 0 8px 20px rgba(34,197,94,0.3);
+  background: var(--primary-gradient);
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
 }
 
-button:active{ transform: scale(0.98); }
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(34, 197, 94, 0.4);
+}
 
-.footer{ margin-top: 12px; font-size: 10px; color: rgba(255,255,255,0.4); }
+button:active { transform: scale(0.98); }
 
-.loading{ margin-top: 12px; display: flex; justify-content: center; gap: 6px; }
-.loading span{
+/* Friendly Message for Users */
+.support-msg {
+  margin-top: 14px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.footer { margin-top: 10px; font-size: 10px; color: rgba(255, 255, 255, 0.4); }
+
+/* Loading Animation */
+.loading { margin-top: 14px; display: flex; justify-content: center; gap: 6px; }
+.loading span {
   width: 6px; height: 6px; border-radius: 50%; background: #fff;
   opacity: .4; animation: blink 1.2s infinite;
 }
-.loading span:nth-child(2){ animation-delay: .2s; }
-.loading span:nth-child(3){ animation-delay: .4s; }
+.loading span:nth-child(2) { animation-delay: .2s; }
+.loading span:nth-child(3) { animation-delay: .4s; }
 
-@keyframes blink{
-  0%,100%{ opacity: .2; transform: scale(.8); }
-  50%{ opacity: 1; transform: scale(1.1); }
+@keyframes blink {
+  0%, 100% { opacity: .2; transform: scale(.8); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 </style>
 </head>
 
 <body>
 
-  
+  <!-- Polite User Support Header Banner -->
+  <div class="support-banner">
+    ❤️ Free content for you! Supporting ads keeps us running.
+  </div>
+
   <!-- Top Native Ad Slot -->
   <div class="ad-container">
     <div id="container-7511a2596b0555d2f804bf638019ca1f"></div>
     <script async="async" data-cfasync="false" src="https://pl30675714.effectivecpmnetwork.com/7511a2596b0555d2f804bf638019ca1f/invoke.js"></script>
-
   </div>
 
   <!-- Main Timer Card -->
@@ -219,6 +253,12 @@ button:active{ transform: scale(0.98); }
     </div>
 
     <button id="btn" onclick="go()" style="display:none;">▶ Watch Video Now</button>
+    
+    <!-- User Friendly Note -->
+    <div class="support-msg">
+      ✨ <i>Clicking sponsor ads helps us maintain free services!</i>
+    </div>
+    
     <div class="footer">Fast • Secure • Encrypted Access</div>
   </div>
 
