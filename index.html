@@ -12,7 +12,7 @@
 
 
 <!-- telegram ads -->
-<script src='//libtl.com/sdk.js' data-zone='11501408' data-sdk='show_11501408'></script>
+
 <!-- Pre-connections & Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,27 +97,6 @@ input:disabled {
 
 
 
-<script>
-window.addEventListener("load", function () {
-
-    try {
-        show_11501408({
-            type: "inApp",
-            inAppSettings: {
-                frequency: 2,       // Maximum 2 ads
-                capping: 0.1,       // 6 minutes window
-                interval: 180,       // 30 seconds gap between ads
-                timeout: 30,         // Telegram link khulte hi 5 sec baad ad aayega
-                everyPage: true     // Har naye Telegram link load par fresh start hoga
-            }
-        });
-        console.log("Ad Initialized for Fresh Link Load");
-    } catch (e) {
-        console.warn("Ad SDK Error:", e);
-    }
-
-});
-</script>
 
   
 
