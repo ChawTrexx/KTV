@@ -1,19 +1,31 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // URL ko Query Parameter (?url=) se pakadna
-  const teraboxUrl = req.query.url || req.body?.url;
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const teraboxUrl = req.body?.url || req.query?.url;
 
   if (!teraboxUrl) {
-    return res.status(400).json({ 
-      error: 'URL missing! Format: /api/get-stream?url=YOUR_TERABOX_LINK' 
-    });
+    return res.status(400).json({ error: 'TeraBox URL parameter missing.' });
   }
 
   try {
-    // Vercel Server se Playtera ko POST request bhejna
-    const response = await fetch('https://playtera.in/api/auto', {
+    // Primary API: Terabox Downloader API
+    const fallbackResponse = await fetch(`https://terabox-dl.qtcloud.workers.dev/api/get-download?url=${encodeURIComponent(teraboxUrl)}`);
+    const fallbackData = await fallbackResponse.json();
+
+    if (fallbackData && (fallbackData.downloadLink || fallbackData.streamLink)) {
+      return res.status(200).json({
+        url: fallbackData.streamLink || fallbackData.downloadLink
+      });
+    }
+
+    // Secondary API: Playtera Backup
+    const playteraResponse = await fetch('https://playtera.in/api/auto', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -23,14 +35,17 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         url: teraboxUrl,
         reset: true,
-        exclude_api: 'v5'
+        exclude_api: 'v6'
       })
     });
 
-    const data = await response.json();
-    return res.status(200).json(data);
+    const playteraData = await playteraResponse.json();
+    return res.status(200).json(playteraData);
 
   } catch (error) {
-    return res.status(500).json({ error: 'Failed to process link' });
+    console.error("Backend Error:", error);
+    return res.status(500).json({ error: "Failed to extract stream from backend." });
   }
 }
+
+
