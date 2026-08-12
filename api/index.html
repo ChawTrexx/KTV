@@ -41,15 +41,21 @@ async function playVideo() {
   const video = document.getElementById('videoPlayer');
 
   if (!urlInput) {
-    status.innerText = "Please paste a valid TeraBox link.";
+    status.innerText = "Kripya TeraBox link daalein.";
     return;
   }
 
-  status.innerText = "Fetching stream link...";
+  status.innerText = "Link process ho raha hai...";
 
   try {
-    // API request to fetch direct stream URL
-    const response = await fetch('https://playtera.in/api/auto', {
+    // 1. Target API URL
+    const targetUrl = 'https://playtera.in/api/auto';
+
+    // 2. CORS Proxy ka add karna (Isse CORS error nahi aayega)
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(targetUrl);
+
+    // 3. API Ko Request Bhejna
+    const response = await fetch(proxyUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -61,13 +67,15 @@ async function playVideo() {
     });
 
     const data = await response.json();
+    console.log("API Result:", data); // Check karne ke liye
 
-    // Check if stream URL exists in response
+    // 4. Video Stream URL nikalna
     const streamUrl = data?.url || data?.stream_url || data?.fast_stream;
 
     if (streamUrl) {
-      status.innerText = "Playing Video...";
+      status.innerText = "Video play ho raha hai...";
       
+      // HLS.js Se M3U8 Video Play Karna
       if (Hls.isSupported()) {
         const hls = new Hls();
         hls.loadSource(streamUrl);
@@ -76,16 +84,15 @@ async function playVideo() {
           video.play();
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Native HLS support for Safari/iOS
         video.src = streamUrl;
         video.play();
       }
     } else {
-      status.innerText = "Failed to extract stream link. Try another URL.";
+      status.innerText = "Video link nahi mila. Naya link try karein.";
     }
   } catch (error) {
     console.error(error);
-    status.innerText = "Error connecting to the streaming backend (CORS or API issue).";
+    status.innerText = "Error: Proxy connect nahi ho raha hai.";
   }
 }
 </script>
