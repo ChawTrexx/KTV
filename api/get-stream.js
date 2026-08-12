@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // CORS Headers for your frontend
+  // CORS Headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -19,29 +19,42 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'TeraBox URL is required' });
     }
 
-    // Playtera API ko Vercel Server se request bhejna (No CORS block here)
+    // Playtera API Call with full session headers
     const playteraResponse = await fetch('https://playtera.in/api/auto', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Referer': 'https://playtera.in/',
-        'Origin': 'https://playtera.in',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'authority': 'playtera.in',
+        'accept': '*/*',
+        'accept-language': 'en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7',
+        'content-type': 'application/json',
+        'origin': 'https://playtera.in',
+        'referer': 'https://playtera.in/',
+        'sec-ch-ua': '"Chromium";v="139", "Not;A=Brand";v="99"',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"Android"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36'
       },
       body: JSON.stringify({
         url: url,
         reset: true,
-        exclude: 'https://dawn-cake-9037.hosudisy.workers.dev',
         exclude_api: 'v5'
       })
     });
+
+    if (!playteraResponse.ok) {
+      return res.status(playteraResponse.status).json({ 
+        error: `Playtera API responded with status ${playteraResponse.status}` 
+      });
+    }
 
     const data = await playteraResponse.json();
     return res.status(200).json(data);
 
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Server error fetching stream' });
+    console.error('Error fetching stream:', error);
+    return res.status(500).json({ error: 'Server error: ' + error.message });
   }
 }
-
