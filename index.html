@@ -1,131 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeraBox Video Player</title>
-  <!-- HLS.js for M3U8 streaming -->
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: #121212; color: #ffffff; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 650px; display: flex; flex-direction: column; gap: 16px; }
-    h2 { font-size: 24px; font-weight: 700; color: #ffffff; text-align: center; }
-    .input-group { display: flex; flex-direction: column; gap: 12px; }
-    input[type="text"] { width: 100%; padding: 14px; border-radius: 8px; border: 1px solid #333333; background-color: #1a1a1a; color: #ffffff; font-size: 15px; outline: none; }
-    input[type="text"]:focus { border-color: #e91e63; }
-    button { width: 100%; padding: 14px; border-radius: 8px; border: none; background-color: #e91e63; color: #ffffff; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    button:hover { background-color: #d81b60; }
-    button:disabled { background-color: #555555; cursor: not-allowed; }
-    #status { font-size: 14px; color: #aaaaaa; min-height: 20px; text-align: center; word-break: break-all; }
-    .player-box { position: relative; width: 100%; padding-top: 56.25%; background: #000000; border-radius: 12px; overflow: hidden; border: 1px solid #222222; }
-    video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <h2>TeraBox Video Player</h2>
-  
-  <div class="input-group">
-    <input type="text" id="teraboxUrl" placeholder="Paste TeraBox link here..." />
-    <button id="playBtn" onclick="playVideo()">Play Video</button>
-  </div>
-  
-  <div id="status"></div>
-
-  <div class="player-box">
-    <video id="videoPlayer" controls playsinline crossorigin="anonymous"></video>
-  </div>
-</div>
+<video id="myPlayer" controls width="100%" poster=""></video>
 
 <script>
-let hlsInstance = null;
-
-async function playVideo() {
-  const urlInput = document.getElementById('teraboxUrl').value.trim();
-  const status = document.getElementById('status');
-  const video = document.getElementById('videoPlayer');
-  const btn = document.getElementById('playBtn');
-
-  if (!urlInput) {
-    status.innerText = "Please paste a valid TeraBox link.";
-    status.style.color = "#ff5252";
-    return;
-  }
-
-  // Clear previous player instance if active
-  if (hlsInstance) {
-    hlsInstance.destroy();
-    hlsInstance = null;
-  }
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
-
-  status.innerText = "Extracting video stream...";
-  status.style.color = "#aaaaaa";
-  btn.disabled = true;
-
+async function loadTeraboxVideo(teraboxUrl) {
   try {
-    const response = await fetch('/api/get-stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: urlInput })
-    });
-
+    // Active free API endpoint
+    const response = await fetch(`https://terabox-dl.qt0.workers.dev/api?url=${encodeURIComponent(teraboxUrl)}`);
     const data = await response.json();
-    console.log("API Response:", data);
-
-    // Deep extraction for video URL from all possible response keys
-    const streamUrl = data?.url || data?.stream_url || data?.fast_stream || data?.link || data?.downloadUrl || (data?.data && data?.data?.url);
-
-    if (streamUrl) {
-      status.innerText = "Loading stream into player...";
-      status.style.color = "#4caf50";
-
-      const isM3U8 = streamUrl.includes('.m3u8');
-
-      if (isM3U8 && Hls.isSupported()) {
-        hlsInstance = new Hls({
-          enableWorker: true,
-          lowLatencyMode: true
-        });
-        hlsInstance.loadSource(streamUrl);
-        hlsInstance.attachMedia(video);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-          status.innerText = "Playing Video...";
-          video.play().catch(e => console.log("Autoplay blocked:", e));
-        });
-        hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-          if (data.fatal) {
-            status.innerText = "Stream playback error. Network issue or expired token.";
-            status.style.color = "#ff5252";
-          }
-        });
-      } else {
-        // Direct MP4 / Browser Native Playback (Safari/iOS)
-        video.src = streamUrl;
-        video.play().then(() => {
-          status.innerText = "Playing Video...";
-        }).catch(e => {
-          status.innerText = "Video ready. Press play button to start.";
-        });
-      }
+    
+    if(data && data.stream_url) {
+      const videoElement = document.getElementById('myPlayer');
+      videoElement.src = data.stream_url;
+      videoElement.play();
     } else {
-      const errorMsg = data?.error || data?.message || "Failed to extract stream link. Link might be invalid or deleted.";
-      status.innerText = "Error: " + errorMsg;
-      status.style.color = "#ff5252";
+      alert("Video link decode nahi ho paya.");
     }
   } catch (error) {
-    console.error(error);
-    status.innerText = "Connection error. Failed to reach Vercel API backend.";
-    status.style.color = "#ff5252";
-  } finally {
-    btn.disabled = false;
+    console.error("Error loading video:", error);
   }
 }
-</script>
 
-</body>
-</html>
+// Apna TeraBox Link Yahan Daalein
+loadTeraboxVideo("https://terafileshare.com/s/1bVmwAt8ODVMmzJkYd6P9pA");
+</script>
