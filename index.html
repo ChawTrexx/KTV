@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>Video Verification</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #101114;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 450px;
+      margin: 45px auto;
+      padding: 24px;
+      background: #1c1d23;
+      border-radius: 14px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #ffffff;
+    }
+
+    .ad-box {
+      min-height: 120px;
+      margin: 25px 0;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #272831;
+      border: 1px dashed #666;
+      border-radius: 8px;
+      color: #b9bac5;
+    }
+
+    #countdown {
+      font-size: 17px;
+      margin: 20px 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 8px;
+      background: #777;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: not-allowed;
+    }
+
+    button.ready {
+      background: #00b968;
+      cursor: pointer;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h2>🎬 Video Verification</h2>
+
+    <p>Please wait while your video link is prepared.</p>
+
+    <div class="ad-box" id="adBox">
+      Advertisement
+    </div>
+
+    <div id="countdown">
+      Please wait 5 seconds...
+    </div>
+
+    <button id="continueBtn" disabled>
+      Please wait...
+    </button>
+
+    <p class="note">
+      After verification, continue to watch your video.
+    </p>
+  </div>
+
+  <script>
+    const button = document.getElementById("continueBtn");
+    const countdown = document.getElementById("countdown");
+
+    const params = new URLSearchParams(window.location.search);
+    const originalLink = params.get("u");
+
+    let seconds = 5;
+
+    // Accept only supported share links.
+    function isAllowedLink(value) {
+      try {
+        const url = new URL(value);
+
+        return (
+          url.protocol === "https:" &&
+          [
+            "terasharefile.com",
+            "www.terasharefile.com",
+            "terabox.com",
+            "www.terabox.com",
+            "1024tera.com",
+            "www.1024tera.com"
+          ].includes(url.hostname)
+        );
+      } catch {
+        return false;
+      }
+    }
+
+    if (!originalLink || !isAllowedLink(originalLink)) {
+      countdown.textContent =
+        "Invalid or missing video link. Please open a valid link.";
+
+      button.textContent = "Invalid Link";
+      button.disabled = true;
+    } else {
+      const timer = setInterval(() => {
+        seconds--;
+
+        if (seconds > 0) {
+          countdown.textContent =
+            `Please wait ${seconds} seconds...`;
+        } else {
+          clearInterval(timer);
+
+          countdown.textContent = "Verification complete!";
+          button.textContent = "▶ Continue to Video";
+          button.disabled = false;
+          button.classList.add("ready");
+        }
+      }, 1000);
+
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+
+        const playerURL =
+          "https://dragoplayer.in/?u=" +
+          encodeURIComponent(originalLink);
+
+        window.location.href = playerURL;
+      });
+    }
+  </script>
+
+</body>
+</html>
